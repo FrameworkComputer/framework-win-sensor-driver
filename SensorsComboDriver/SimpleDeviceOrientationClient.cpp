@@ -30,8 +30,6 @@ DEFINE_GUID(GUID_SimpleDeviceOrientationDevice_UniqueID,
 typedef enum
 {
     LINEAR_ACCELEROMETER_DATA_X = 0,
-    LINEAR_ACCELEROMETER_DATA_Y,
-    LINEAR_ACCELEROMETER_DATA_Z,
     LINEAR_ACCELEROMETER_DATA_TIMESTAMP,
     LINEAR_ACCELEROMETER_DATA_SHAKE,
     LINEAR_ACCELEROMETER_DATA_COUNT
@@ -177,8 +175,6 @@ SimpleDeviceOrientationDevice::Initialize(
 
         m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP] = PKEY_SensorData_Timestamp;
         m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_X] = PKEY_SensorData_AccelerationX_Gs;
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_Y] = PKEY_SensorData_AccelerationY_Gs;
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_Z] = PKEY_SensorData_AccelerationZ_Gs;
         m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_SHAKE] = PKEY_SensorData_Shake;
     }
 
@@ -216,23 +212,13 @@ SimpleDeviceOrientationDevice::Initialize(
     m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
     InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
 
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_Y].Key = PKEY_SensorData_AccelerationY_Gs;
-    InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Y].Value));
-
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_Z].Key = PKEY_SensorData_AccelerationZ_Gs;
-    InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Z].Value));
-
     m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Key = PKEY_SensorData_Shake;
     InitPropVariantFromBoolean(FALSE, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
 
-    m_CachedData.Axis.X = 0.0f;
-    m_CachedData.Axis.Y = 0.0f;
-    m_CachedData.Axis.Z = -1.0f;
+    m_CachedData.X = 0.0f;
     m_CachedData.Shake = FALSE;
 
-    m_LastSample.Axis.X  = 0.0f;
-    m_LastSample.Axis.Y  = 0.0f;
-    m_LastSample.Axis.Z  = 0.0f;
+    m_LastSample.X  = 0.0f;
     m_LastSample.Shake = FALSE;
     }
 
@@ -351,17 +337,7 @@ SimpleDeviceOrientationDevice::Initialize(
         InitPropVariantFromFloat(SimpleDeviceOrientationDevice_Default_Axis_Threshold,
                                  &(m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_X].Value));
 
-        m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Y].Key = PKEY_SensorData_AccelerationY_Gs;
-        InitPropVariantFromFloat(SimpleDeviceOrientationDevice_Default_Axis_Threshold,
-                                 &(m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Y].Value));
-
-        m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Z].Key = PKEY_SensorData_AccelerationZ_Gs;
-        InitPropVariantFromFloat(SimpleDeviceOrientationDevice_Default_Axis_Threshold,
-                                 &(m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Z].Value));
-
-        m_CachedThresholds.Axis.X = SimpleDeviceOrientationDevice_Default_Axis_Threshold;
-        m_CachedThresholds.Axis.Y = SimpleDeviceOrientationDevice_Default_Axis_Threshold;
-        m_CachedThresholds.Axis.Z = SimpleDeviceOrientationDevice_Default_Axis_Threshold;
+        m_CachedThresholds.X = SimpleDeviceOrientationDevice_Default_Axis_Threshold;
 
         m_FirstSample = TRUE;
     }
@@ -414,9 +390,7 @@ SimpleDeviceOrientationDevice::GetData(
     {
         // Compare the change of data to threshold, and only push the data back to
         // clx if the change exceeds threshold. This is usually done in HW.
-        if ( (abs(m_CachedData.Axis.X - m_LastSample.Axis.X) >= m_CachedThresholds.Axis.X) ||
-             (abs(m_CachedData.Axis.Y - m_LastSample.Axis.Y) >= m_CachedThresholds.Axis.Y) ||
-             (abs(m_CachedData.Axis.Z - m_LastSample.Axis.Z) >= m_CachedThresholds.Axis.Z))
+        if ( (abs(m_CachedData.X - m_LastSample.X) >= m_CachedThresholds.X))
         {
             DataReady = TRUE;
         }
@@ -425,16 +399,12 @@ SimpleDeviceOrientationDevice::GetData(
     if (DataReady != FALSE)
     {
         // update last sample
-        m_LastSample.Axis.X = m_CachedData.Axis.X;
-        m_LastSample.Axis.Y = m_CachedData.Axis.Y;
-        m_LastSample.Axis.Z = m_CachedData.Axis.Z;
+        m_LastSample.X = m_CachedData.X;
 
         m_LastSample.Shake = m_CachedData.Shake;
 
         // push to clx
-        InitPropVariantFromFloat(m_LastSample.Axis.X, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
-        InitPropVariantFromFloat(m_LastSample.Axis.Y, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Y].Value));
-        InitPropVariantFromFloat(m_LastSample.Axis.Z, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Z].Value));
+        InitPropVariantFromFloat(m_LastSample.X, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
 
         InitPropVariantFromBoolean(m_LastSample.Shake, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
 
@@ -477,28 +447,10 @@ SimpleDeviceOrientationDevice::UpdateCachedThreshold(
 
     Status = PropKeyFindKeyGetFloat(m_pThresholds,
                                     &PKEY_SensorData_AccelerationX_Gs,
-                                    &m_CachedThresholds.Axis.X);
+                                    &m_CachedThresholds.X);
     if (!NT_SUCCESS(Status))
     {
         TraceError("COMBO %!FUNC! LAC PropKeyFindKeyGetFloat for X failed! %!STATUS!", Status);
-        goto Exit;
-    }
-
-    Status = PropKeyFindKeyGetFloat(m_pThresholds,
-                                    &PKEY_SensorData_AccelerationY_Gs,
-                                    &m_CachedThresholds.Axis.Y);
-    if (!NT_SUCCESS(Status))
-    {
-        TraceError("COMBO %!FUNC! LAC PropKeyFindKeyGetFloat for Y failed! %!STATUS!", Status);
-        goto Exit;
-    }
-
-    Status = PropKeyFindKeyGetFloat(m_pThresholds,
-                                    &PKEY_SensorData_AccelerationZ_Gs,
-                                    &m_CachedThresholds.Axis.Z);
-    if (!NT_SUCCESS(Status))
-    {
-        TraceError("COMBO %!FUNC! LAC PropKeyFindKeyGetFloat for Z failed! %!STATUS!", Status);
         goto Exit;
     }
 

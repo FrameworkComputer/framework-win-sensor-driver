@@ -22,6 +22,7 @@
 enum Device
 {
     Device_Als = 0,
+    Device_SimpleDeviceOrientation,
     Device_LinearAccelerometer,
     // Keep this last
     Device_Count
@@ -37,6 +38,7 @@ inline size_t GetDeviceSizeAtIndex(
     switch (static_cast<Device>(Index))
     {
         case Device_Als:                    result = sizeof(AlsDevice); break;
+        case Device_SimpleDeviceOrientation:result = sizeof(SimpleDeviceOrientationDevice); break;
         case Device_LinearAccelerometer:    result = sizeof(LinearAccelerometerDevice); break;
         default: break; // invalid
     }
@@ -51,6 +53,7 @@ void AllocateDeviceAtIndex(
     switch (static_cast<Device>(Index))
     {
         case Device_Als:                    *ppDevice = new(*ppDevice) AlsDevice; break;
+        case Device_SimpleDeviceOrientation:*ppDevice = new(*ppDevice) SimpleDeviceOrientationDevice; break;
         case Device_LinearAccelerometer:    *ppDevice = new(*ppDevice) LinearAccelerometerDevice; break;
 
         default: break; // invalid (let driver fail)

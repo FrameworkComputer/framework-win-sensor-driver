@@ -228,3 +228,30 @@ public:
     NTSTATUS                    UpdateCachedThreshold();
 
 } LinearAccelerometerDevice, *PLinearAccelerometerDevice;
+
+
+
+//
+// Simple Device Orientation --------------------------------------------------
+//
+typedef class _SimpleDeviceOrientationDevice : public _ComboDevice
+{
+private:
+
+    typedef struct _SimpleDeviceOrientationSample
+    {
+        VEC3D   Axis;
+        BOOL    Shake;
+    } SimpleDeviceOrientationSample, *PSimpleDeviceOrientationSample;
+
+    SimpleDeviceOrientationSample                       m_CachedThresholds;
+    SimpleDeviceOrientationSample                       m_CachedData;
+    SimpleDeviceOrientationSample                       m_LastSample;
+
+public:
+
+    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
+    NTSTATUS                    GetData();
+    NTSTATUS                    UpdateCachedThreshold();
+
+} SimpleDeviceOrientationDevice, *PSimpleDeviceOrientationDevice;

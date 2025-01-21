@@ -22,13 +22,7 @@
 enum Device
 {
     Device_Als = 0,
-    Device_GeomagneticOrientation,
-    Device_GravityVector,
-    Device_Gyr,
     Device_LinearAccelerometer,
-    Device_Mag,
-    Device_Prx,
-    Device_RelativeFusion,
     // Keep this last
     Device_Count
 };
@@ -43,13 +37,7 @@ inline size_t GetDeviceSizeAtIndex(
     switch (static_cast<Device>(Index))
     {
         case Device_Als:                    result = sizeof(AlsDevice); break;
-        case Device_GeomagneticOrientation: result = sizeof(GeomagneticOrientationDevice); break;
-        case Device_GravityVector:          result = sizeof(GravityVectorDevice); break;
-        case Device_Gyr:                    result = sizeof(GyrDevice); break;
         case Device_LinearAccelerometer:    result = sizeof(LinearAccelerometerDevice); break;
-        case Device_Mag:                    result = sizeof(MagDevice); break;
-        case Device_Prx:                    result = sizeof(PrxDevice); break;
-        case Device_RelativeFusion:         result = sizeof(RelativeFusionDevice); break;
         default: break; // invalid
     }
     return result;
@@ -63,13 +51,7 @@ void AllocateDeviceAtIndex(
     switch (static_cast<Device>(Index))
     {
         case Device_Als:                    *ppDevice = new(*ppDevice) AlsDevice; break;
-        case Device_GeomagneticOrientation: *ppDevice = new(*ppDevice) GeomagneticOrientationDevice; break;
-        case Device_GravityVector:          *ppDevice = new(*ppDevice) GravityVectorDevice; break;
-        case Device_Gyr:                    *ppDevice = new(*ppDevice) GyrDevice; break;
         case Device_LinearAccelerometer:    *ppDevice = new(*ppDevice) LinearAccelerometerDevice; break;
-        case Device_Mag:                    *ppDevice = new(*ppDevice) MagDevice; break;
-        case Device_Prx:                    *ppDevice = new(*ppDevice) PrxDevice; break;
-        case Device_RelativeFusion:         *ppDevice = new(*ppDevice) RelativeFusionDevice; break;
 
         default: break; // invalid (let driver fail)
     }

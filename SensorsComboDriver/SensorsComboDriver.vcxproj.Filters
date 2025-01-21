@@ -22,9 +22,6 @@
     <ClCompile Include="AlsClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BarClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Clients.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

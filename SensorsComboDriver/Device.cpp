@@ -22,7 +22,6 @@
 enum Device
 {
     Device_Als = 0,
-    Device_Bar,
     Device_GeomagneticOrientation,
     Device_GravityVector,
     Device_Gyr,
@@ -44,7 +43,6 @@ inline size_t GetDeviceSizeAtIndex(
     switch (static_cast<Device>(Index))
     {
         case Device_Als:                    result = sizeof(AlsDevice); break;
-        case Device_Bar:                    result = sizeof(BarDevice); break;
         case Device_GeomagneticOrientation: result = sizeof(GeomagneticOrientationDevice); break;
         case Device_GravityVector:          result = sizeof(GravityVectorDevice); break;
         case Device_Gyr:                    result = sizeof(GyrDevice); break;
@@ -65,7 +63,6 @@ void AllocateDeviceAtIndex(
     switch (static_cast<Device>(Index))
     {
         case Device_Als:                    *ppDevice = new(*ppDevice) AlsDevice; break;
-        case Device_Bar:                    *ppDevice = new(*ppDevice) BarDevice; break;
         case Device_GeomagneticOrientation: *ppDevice = new(*ppDevice) GeomagneticOrientationDevice; break;
         case Device_GravityVector:          *ppDevice = new(*ppDevice) GravityVectorDevice; break;
         case Device_Gyr:                    *ppDevice = new(*ppDevice) GyrDevice; break;

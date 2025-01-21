@@ -240,7 +240,7 @@ private:
 
     typedef struct _SimpleDeviceOrientationSample
     {
-        VEC3D   Axis;
+        FLOAT    X;
         BOOL    Shake;
     } SimpleDeviceOrientationSample, *PSimpleDeviceOrientationSample;
 

@@ -76,7 +76,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
   </ImportGroup>
   <ItemGroup Label="WrappedTaskItems">
-    <ClCompile Include="AlsClient.cpp; BarClient.cpp; Clients.cpp; device.cpp; driver.cpp; GeomagneticOrientationClient.cpp; GravityVectorClient.cpp; GyrClient.cpp; linearaccelerometerclient.cpp; MagClient.cpp; PrxClient.cpp; relativefusionclient.cpp">
+    <ClCompile Include="AlsClient.cpp; Clients.cpp; device.cpp; driver.cpp; GeomagneticOrientationClient.cpp; GravityVectorClient.cpp; GyrClient.cpp; linearaccelerometerclient.cpp; MagClient.cpp; PrxClient.cpp; relativefusionclient.cpp">
       <WppEnabled>true</WppEnabled>
       <WppDllMacro>true</WppDllMacro>
       <WppModuleName>SensorsComboDriver</WppModuleName>

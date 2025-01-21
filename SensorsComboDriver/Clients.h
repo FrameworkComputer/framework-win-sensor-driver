@@ -205,27 +205,6 @@ public:
 
 
 //
-// Barometer --------------------------------------------------------------
-//
-typedef class _BarDevice : public _ComboDevice
-{
-private:
-
-    FLOAT                       m_CachedThresholds;
-    FLOAT                       m_CachedData;
-    FLOAT                       m_LastSample;
-
-public:
-
-    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
-    NTSTATUS                    UpdateCachedThreshold();
-
-} BarDevice, *PBarDevice;
-
-
-
-//
 // Gyroscope ------------------------------------------------------------------
 //
 typedef class _GyrDevice : public _ComboDevice

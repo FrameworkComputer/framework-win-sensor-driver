@@ -78,6 +78,6 @@ UmdfExtensions           = SensorsCx0102
 ;Localizable Strings
 MediaDescription           = "Windows Sensors Combo Driver"
 PROVIDER                   = "Manufacturer Name"
-SensorsComboDriver_DevDesc = "Sensors Combo Driver - Ambient Light, Barometer, Gyroscope, Magnetometer, Proximity, and Relative Fusion, and more."
+SensorsComboDriver_DevDesc = "Sensors Combo Driver - ALS, Accelerometer, Orientation"
 
 ;Non-Localizable Strings

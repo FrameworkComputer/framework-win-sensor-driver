@@ -47,7 +47,7 @@ OnTimerExpire(
 
     // Get data and push to clx
     Lock(pDevice->m_Lock);
-    Status = pDevice->GetData();
+    Status = pDevice->GetData(pDevice->m_CrosEcHandle);
     if (!NT_SUCCESS(Status) && Status != STATUS_DATA_NOT_ACCEPTED)
     {
         TraceError("COMBO %!FUNC! GetData Failed %!STATUS!", Status);

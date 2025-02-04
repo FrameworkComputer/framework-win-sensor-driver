@@ -9,6 +9,7 @@
 //  Windows User-Mode Driver Framework (WUDF)
 
 #include "Clients.h"
+#include <handleapi.h>
 
 #include "AlsClient.tmh"
 
@@ -462,6 +463,40 @@ Exit:
 }
 
 
+static int CrosEcReadMemU8(HANDLE Handle, unsigned int offset, UINT8* dest)
+{
+    NTSTATUS Status = STATUS_SUCCESS;
+    DWORD retb{};
+    CROSEC_READMEM rm{};
+
+    if (Handle == INVALID_HANDLE_VALUE) {
+        Status = STATUS_INVALID_HANDLE;
+        TraceError("COMBO %!FUNC! Invalid Handle");
+        return 0;
+    }
+
+    rm.bytes = 0x01;
+    rm.offset = offset;
+    Status = DeviceIoControl(Handle,
+        (DWORD) IOCTL_CROSEC_RDMEM,
+        &rm,
+        sizeof(rm),
+        &rm,
+        sizeof(rm),
+        &retb,
+        nullptr);
+    if (!NT_SUCCESS(Status)) {
+        TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
+        return 0;
+    }
+
+    TraceInformation("COMBO %!FUNC! Successfully read %d bytes from EC memory at %02x. First one %02x. retb=%d", rm.bytes, rm.offset, rm.buffer[0], retb);
+    *dest = rm.buffer[0];
+
+    return rm.bytes;
+}
+
+
 
 //------------------------------------------------------------------------------
 // Function: GetData
@@ -478,6 +513,7 @@ Exit:
 //------------------------------------------------------------------------------
 NTSTATUS
 AlsDevice::GetData(
+    _In_ HANDLE Handle
     )
 {
     BOOLEAN DataReady = FALSE;
@@ -485,6 +521,15 @@ AlsDevice::GetData(
     NTSTATUS Status = STATUS_SUCCESS;
 
     SENSOR_FunctionEnter();
+
+    UINT8 als[4] = {0};
+    CrosEcReadMemU8(Handle, 0x80 + 0, &als[0]);
+    CrosEcReadMemU8(Handle, 0x80 + 1, &als[1]);
+    CrosEcReadMemU8(Handle, 0x80 + 2, &als[2]);
+    CrosEcReadMemU8(Handle, 0x80 + 3, &als[3]);
+    m_CachedData.Lux = (float) (als[0] + (als[1] << 8) + (als[2] << 16) + (als[3] << 24));
+    TraceInformation("Read ALS value %02x %02x %02x %02x (%f)\n",
+        als[0], als[1], als[2], als[3], m_CachedData.Lux);
 
     // new sample?
     if (m_FirstSample != FALSE)

@@ -387,11 +387,14 @@ Exit:
 //------------------------------------------------------------------------------
 NTSTATUS
 LinearAccelerometerDevice::GetData(
+    _In_ HANDLE Device
     )
 {
     BOOLEAN DataReady = FALSE;
     FILETIME TimeStamp = {0};
     NTSTATUS Status = STATUS_SUCCESS;
+
+    UNREFERENCED_PARAMETER(Device);
 
     SENSOR_FunctionEnter();
 

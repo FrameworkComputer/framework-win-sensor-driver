@@ -13,8 +13,12 @@
 #include "Driver.h"
 
 #include <new.h>
+#include <winnt.h>
 
 #include "Device.tmh"
+
+#define EC_LPC_ADDR_MEMMAP       0xE00
+#define EC_MEMMAP_SIZE         255 /* ACPI IO buffer max is 255 bytes */
 
 //---------------------------------------
 // Declare and map devices below
@@ -327,6 +331,78 @@ Exit:
     return Status;
 }
 
+#define FILE_DEVICE_CROS_EMBEDDED_CONTROLLER 0x80EC
+
+#define IOCTL_CROSEC_XCMD \
+	CTL_CODE(FILE_DEVICE_CROS_EMBEDDED_CONTROLLER, 0x801, METHOD_BUFFERED, FILE_READ_DATA | FILE_WRITE_DATA)
+#define IOCTL_CROSEC_RDMEM CTL_CODE(FILE_DEVICE_CROS_EMBEDDED_CONTROLLER, 0x802, METHOD_BUFFERED, FILE_READ_DATA)
+
+#define CROSEC_CMD_MAX_REQUEST  0x100
+#define CROSEC_CMD_MAX_RESPONSE 0x100
+#define CROSEC_MEMMAP_SIZE      0xFF
+
+typedef struct _CROSEC_READMEM {
+	ULONG offset;
+	ULONG bytes;
+	UCHAR buffer[CROSEC_MEMMAP_SIZE];
+} * PCROSEC_READMEM, CROSEC_READMEM;
+
+
+NTSTATUS ConnectToEc(
+	_In_ WDFDEVICE FxDevice
+) {
+    SENSOR_FunctionEnter();
+    NTSTATUS Status = STATUS_SUCCESS;
+    HANDLE h;
+    CROSEC_READMEM rm{};
+    DWORD retb{};
+
+    UNREFERENCED_PARAMETER(FxDevice);
+
+    h = CreateFileW(
+        LR"(\\.\GLOBALROOT\Device\CrosEC)",
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_OVERLAPPED,
+        NULL);
+
+    if (h == INVALID_HANDLE_VALUE) {
+        Status = STATUS_INVALID_HANDLE;
+        TraceError("COMBO %!FUNC! CreateFileW failed %!STATUS!", Status);
+        goto Exit;
+    }
+
+    rm.bytes = 0xfe;
+    rm.offset = 0;
+    Status = DeviceIoControl(h,
+        (DWORD) IOCTL_CROSEC_RDMEM,
+        &rm,
+        sizeof(rm),
+        &rm,
+        sizeof(rm),
+        &retb,
+        nullptr);
+    if (!NT_SUCCESS(Status)) {
+        TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
+        goto Exit;
+    }
+
+    UINT8 *EcMem = rm.buffer;
+    for (int i = 0; i < 0xfe-16; i+=16) {
+        TraceInformation(
+            "%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+            EcMem[i], EcMem[i+1], EcMem[i+2], EcMem[i+3], EcMem[i+4], EcMem[i + 5], EcMem[i + 6], EcMem[i + 7],
+            EcMem[i + 8], EcMem[i+9], EcMem[i+10], EcMem[i+11], EcMem[i+12], EcMem[i + 13], EcMem[i + 14], EcMem[i + 15]
+        );
+    }
+
+Exit:
+    SENSOR_FunctionExit(Status);
+
+	return Status;
+}
 
 
 //------------------------------------------------------------------------------
@@ -358,6 +434,12 @@ OnD0Entry(
     NTSTATUS Status = STATUS_SUCCESS;
 
     SENSOR_FunctionEnter();
+
+    Status = ConnectToEc(Device);
+    if (!NT_SUCCESS(Status)) {
+        TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
+        goto Exit;
+    }
 
     //
     // Get sensor instances

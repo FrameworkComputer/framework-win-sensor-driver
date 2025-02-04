@@ -126,6 +126,7 @@ public:
     ULONG                       m_StartTime;
     ULONGLONG                   m_SampleCount;
     BOOLEAN                     m_WakeEnabled;
+    HANDLE                      m_CrosEcHandle;
 
     //
     // Sensor Specific Properties
@@ -142,7 +143,7 @@ public:
     // Sensor specific functions
     //
     virtual NTSTATUS            Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj) = NULL;
-    virtual NTSTATUS            GetData()                                                      = NULL;
+    virtual NTSTATUS            GetData(_In_ HANDLE Handle)                                    = NULL;
     virtual NTSTATUS            UpdateCachedThreshold()                                        = NULL;
     virtual NTSTATUS            EnableWake() { return STATUS_NOT_SUPPORTED; }
     virtual NTSTATUS            DisableWake() { return STATUS_NOT_SUPPORTED; }
@@ -197,7 +198,7 @@ private:
 public:
 
     NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
+    NTSTATUS                    GetData(_In_ HANDLE Device);
     NTSTATUS                    UpdateCachedThreshold();
 
 } AlsDevice, *PAlsDevice;
@@ -224,7 +225,7 @@ private:
 public:
 
     NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
+    NTSTATUS                    GetData(_In_ HANDLE Device);
     NTSTATUS                    UpdateCachedThreshold();
 
 } LinearAccelerometerDevice, *PLinearAccelerometerDevice;
@@ -251,7 +252,23 @@ private:
 public:
 
     NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
+    NTSTATUS                    GetData(_In_ HANDLE Device);
     NTSTATUS                    UpdateCachedThreshold();
 
 } SimpleDeviceOrientationDevice, *PSimpleDeviceOrientationDevice;
+
+#define FILE_DEVICE_CROS_EMBEDDED_CONTROLLER 0x80EC
+
+#define IOCTL_CROSEC_XCMD \
+	CTL_CODE(FILE_DEVICE_CROS_EMBEDDED_CONTROLLER, 0x801, METHOD_BUFFERED, FILE_READ_DATA | FILE_WRITE_DATA)
+#define IOCTL_CROSEC_RDMEM CTL_CODE(FILE_DEVICE_CROS_EMBEDDED_CONTROLLER, 0x802, METHOD_BUFFERED, FILE_READ_DATA)
+
+#define CROSEC_CMD_MAX_REQUEST  0x100
+#define CROSEC_CMD_MAX_RESPONSE 0x100
+#define CROSEC_MEMMAP_SIZE      0xFF
+
+typedef struct _CROSEC_READMEM {
+	ULONG offset;
+	ULONG bytes;
+	UCHAR buffer[CROSEC_MEMMAP_SIZE];
+} * PCROSEC_READMEM, CROSEC_READMEM;

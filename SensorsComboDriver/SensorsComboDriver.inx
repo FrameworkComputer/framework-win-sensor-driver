@@ -1,15 +1,13 @@
 /*++
 ;
 ;Copyright (c) Microsoft Corporation.  All rights reserved.
+;Copyright (c) Framework Computer Inc. All rights reserved.
 ;
 ;Module Name:
 ;    SensorsComboDriver.INF
 ;
 ;Abstract:
-;    INF file for installing the Sensors Combo Driver
-;
-;Installation Notes:
-;    Using Devcon: Type "devcon install SensorsComboDriver.inf umdf2\SensorsComboDriver" to install
+;    INF file for installing the Framework Sensor Driver
 ;
 ;--*/
 [Version]
@@ -76,8 +74,8 @@ UmdfExtensions           = SensorsCx0102
 
 [Strings]
 ;Localizable Strings
-MediaDescription           = "Windows Sensors Combo Driver"
-PROVIDER                   = "Manufacturer Name"
-SensorsComboDriver_DevDesc = "Sensors Combo Driver - ALS, Accelerometer, Orientation"
+MediaDescription           = "Framework Computer Sensor Driver"
+PROVIDER                   = "Framework Computer Inc"
+SensorsComboDriver_DevDesc = "Sensor Driver - ALS, Accelerometer, Orientation"
 
 ;Non-Localizable Strings

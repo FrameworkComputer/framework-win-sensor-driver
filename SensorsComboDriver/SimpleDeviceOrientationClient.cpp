@@ -126,7 +126,7 @@ SimpleDeviceOrientationDevice::Initialize(
                                  &(m_pEnumerationProperties->List[SENSOR_TYPE_GUID].Value));
 
         m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Key = DEVPKEY_Sensor_Manufacturer;
-        InitPropVariantFromString(L"Manufacturer name",
+        InitPropVariantFromString(L"Framework Computer Inc",
                                   &(m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Value));
 
         m_pEnumerationProperties->List[SENSOR_MODEL].Key = DEVPKEY_Sensor_Model;

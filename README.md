@@ -38,10 +38,10 @@ Driver Name:                oem2.inf
 Microsoft PnP Utility
 
 Instance ID:                ACPI\FRMWC006\1
-Device Description:         Sensors Combo Driver - ALS, Accelerometer, Orientation
+Device Description:         Sensor Driver - ALS, Accelerometer, Orientation
 Class Name:                 Sensor
 Class GUID:                 {5175d334-c371-4806-b3ba-71fd53c9258d}
-Manufacturer Name:          Manufacturer Name
+Manufacturer Name:          Framework Computer Inc
 Status:                     Started
 Driver Name:                oem194.inf
 ```

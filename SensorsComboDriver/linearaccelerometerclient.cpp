@@ -123,7 +123,7 @@ LinearAccelerometerDevice::Initialize(
         m_pEnumerationProperties->Count = SENSOR_ENUMERATION_PROPERTIES_COUNT;
 
         m_pEnumerationProperties->List[SENSOR_TYPE_GUID].Key = DEVPKEY_Sensor_Type;
-        InitPropVariantFromCLSID(GUID_SensorType_LinearAccelerometer,
+        InitPropVariantFromCLSID(GUID_SensorType_Accelerometer3D,
                                  &(m_pEnumerationProperties->List[SENSOR_TYPE_GUID].Value));
 
         m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Key = DEVPKEY_Sensor_Manufacturer;

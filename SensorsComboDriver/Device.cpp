@@ -18,9 +18,9 @@
 
 #include "Device.tmh"
 
-#define ENABLE_ALS_SENSOR 1
+#define ENABLE_ALS_SENSOR 0
 #define ENABLE_ORIENTATION_SENSOR 0
-#define ENABLE_ACCEL_SENSOR 0
+#define ENABLE_ACCEL_SENSOR 1
 
 //---------------------------------------
 // Declare and map devices below

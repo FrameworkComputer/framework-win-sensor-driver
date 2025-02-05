@@ -27,8 +27,10 @@ extern "C" {
 
 /* Define the format of the accelerometer mapped memory status byte. */
 #define EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK 0x0f
-#define EC_MEMMAP_ACC_STATUS_BUSY_BIT BIT(4)
-#define EC_MEMMAP_ACC_STATUS_PRESENCE_BIT BIT(7)
+// BIT(4)
+#define EC_MEMMAP_ACC_STATUS_BUSY_BIT (1 << 4)
+// BIT(7)
+#define EC_MEMMAP_ACC_STATUS_PRESENCE_BIT (1 << 7)
 
 #define FILE_DEVICE_CROS_EMBEDDED_CONTROLLER 0x80EC
 

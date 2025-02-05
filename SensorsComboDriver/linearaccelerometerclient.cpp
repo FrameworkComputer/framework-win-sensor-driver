@@ -9,6 +9,7 @@
 //  Windows User-Mode Driver Framework (UMDF)
 
 #include "Clients.h"
+#include "EcCommunication.h"
 
 #include "LinearAccelerometerClient.tmh"
 
@@ -127,11 +128,11 @@ LinearAccelerometerDevice::Initialize(
                                  &(m_pEnumerationProperties->List[SENSOR_TYPE_GUID].Value));
 
         m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Key = DEVPKEY_Sensor_Manufacturer;
-        InitPropVariantFromString(L"Manufacturer name",
+        InitPropVariantFromString(L"Framework Computer",
                                   &(m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Value));
 
         m_pEnumerationProperties->List[SENSOR_MODEL].Key = DEVPKEY_Sensor_Model;
-        InitPropVariantFromString(L"Linear Accelerometer",
+        InitPropVariantFromString(L"Accelerometer",
                                   &(m_pEnumerationProperties->List[SENSOR_MODEL].Value));
 
         m_pEnumerationProperties->List[SENSOR_CONNECTION_TYPE].Key = DEVPKEY_Sensor_ConnectionType;
@@ -387,16 +388,49 @@ Exit:
 //------------------------------------------------------------------------------
 NTSTATUS
 LinearAccelerometerDevice::GetData(
-    _In_ HANDLE Device
+    _In_ HANDLE Handle
     )
 {
     BOOLEAN DataReady = FALSE;
     FILETIME TimeStamp = {0};
     NTSTATUS Status = STATUS_SUCCESS;
 
-    UNREFERENCED_PARAMETER(Device);
-
     SENSOR_FunctionEnter();
+
+    UINT8 acc_status = 0;
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);
+    TraceInformation("Status: (%02x), Present: %d, Busy: %d\n",
+        acc_status,
+        (acc_status & EC_MEMMAP_ACC_STATUS_PRESENCE_BIT) > 0,
+        (acc_status & EC_MEMMAP_ACC_STATUS_BUSY_BIT) > 0);
+
+    UINT8 lid_angle_bytes[2] = {0};
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 0, &lid_angle_bytes[0]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 1, &lid_angle_bytes[1]);
+    UINT16 lid_angle = lid_angle_bytes[0] + (lid_angle_bytes[1] << 8);
+    TraceInformation("Lid Angle Status: %dDeg%s", lid_angle, lid_angle == 500 ?  "(Unreliable)" : "");
+
+    UINT16 Sensor1[6] = {0};
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 2, (UINT8*)&Sensor1[0]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 3, (UINT8*)&Sensor1[1]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 4, (UINT8*)&Sensor1[2]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 5, (UINT8*)&Sensor1[3]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 6, (UINT8*)&Sensor1[4]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 7, (UINT8*)&Sensor1[5]);
+    m_CachedData.Axis.X = (float) (Sensor1[0] + (Sensor1[1] << 8));
+    m_CachedData.Axis.Y = (float) (Sensor1[2] + (Sensor1[3] << 8));
+    m_CachedData.Axis.Z = (float) (Sensor1[4] + (Sensor1[5] << 8));
+    #define quarter (0xFFFF/4)
+    m_CachedData.Axis.X = -((float) (INT16) m_CachedData.Axis.X) / quarter;
+    m_CachedData.Axis.Y = -((float) (INT16) m_CachedData.Axis.Y) / quarter;
+    m_CachedData.Axis.Z = -((float) (INT16) m_CachedData.Axis.Z) / quarter;
+    TraceInformation("Read Accel Value %02x %02x %02x %02x %02x %02x - x: %f, y: %f, z: %f\n",
+        Sensor1[0], Sensor1[1],
+        Sensor1[2], Sensor1[3],
+        Sensor1[4], Sensor1[5],
+        m_CachedData.Axis.X,
+        m_CachedData.Axis.Y,
+        m_CachedData.Axis.Z);
 
     // new sample?
     if (m_FirstSample != FALSE)

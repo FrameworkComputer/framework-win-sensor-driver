@@ -19,15 +19,24 @@
 
 #define EC_LPC_ADDR_MEMMAP       0xE00
 #define EC_MEMMAP_SIZE         255 /* ACPI IO buffer max is 255 bytes */
+#define ENABLE_ALS_SENSOR 1
+#define ENABLE_ORIENTATION_SENSOR 0
+#define ENABLE_ACCEL_SENSOR 0
 
 //---------------------------------------
 // Declare and map devices below
 //---------------------------------------
 enum Device
 {
-    Device_Als = 0,
+#if ENABLE_ALS_SENSOR
+    Device_Als,
+#endif
+#if ENABLE_ORIENTATION_SENSOR
     Device_SimpleDeviceOrientation,
+#endif
+#if ENABLE_ACCEL_SENSOR
     Device_LinearAccelerometer,
+#endif
     // Keep this last
     Device_Count
 };
@@ -41,9 +50,15 @@ inline size_t GetDeviceSizeAtIndex(
     size_t result = 0;
     switch (static_cast<Device>(Index))
     {
+#if ENABLE_ALS_SENSOR
         case Device_Als:                    result = sizeof(AlsDevice); break;
+#endif
+#if ENABLE_ORIENTATION_SENSOR
         case Device_SimpleDeviceOrientation:result = sizeof(SimpleDeviceOrientationDevice); break;
+#endif
+#if ENABLE_ACCEL_SENSOR
         case Device_LinearAccelerometer:    result = sizeof(LinearAccelerometerDevice); break;
+#endif
         default: break; // invalid
     }
     return result;
@@ -56,9 +71,15 @@ void AllocateDeviceAtIndex(
 {
     switch (static_cast<Device>(Index))
     {
+#if ENABLE_ALS_SENSOR
         case Device_Als:                    *ppDevice = new(*ppDevice) AlsDevice; break;
+#endif
+#if ENABLE_ORIENTATIONACCEL_SENSOR
         case Device_SimpleDeviceOrientation:*ppDevice = new(*ppDevice) SimpleDeviceOrientationDevice; break;
+#endif
+#if ENABLE_ACCEL_SENSOR
         case Device_LinearAccelerometer:    *ppDevice = new(*ppDevice) LinearAccelerometerDevice; break;
+#endif
 
         default: break; // invalid (let driver fail)
     }

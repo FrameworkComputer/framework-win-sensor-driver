@@ -31,6 +31,9 @@
     <ClCompile Include="driver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EcCommunication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="SimpleDeviceOrientationClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

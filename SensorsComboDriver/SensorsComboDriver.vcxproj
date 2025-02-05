@@ -80,7 +80,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
   </ImportGroup>
   <ItemGroup Label="WrappedTaskItems">
-    <ClCompile Include="AlsClient.cpp; Clients.cpp; device.cpp; driver.cpp; SimpleDeviceOrientationClient.cpp; linearaccelerometerclient.cpp; ">
+    <ClCompile Include="AlsClient.cpp; Clients.cpp; device.cpp; driver.cpp; EcCommunication.cpp; SimpleDeviceOrientationClient.cpp; linearaccelerometerclient.cpp; ">
       <WppEnabled>true</WppEnabled>
       <WppDllMacro>true</WppDllMacro>
       <WppModuleName>SensorsComboDriver</WppModuleName>

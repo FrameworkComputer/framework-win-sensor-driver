@@ -11,14 +11,13 @@
 
 #include "Clients.h"
 #include "Driver.h"
+#include "EcCommunication.h"
 
 #include <new.h>
 #include <winnt.h>
 
 #include "Device.tmh"
 
-#define EC_LPC_ADDR_MEMMAP       0xE00
-#define EC_MEMMAP_SIZE         255 /* ACPI IO buffer max is 255 bytes */
 #define ENABLE_ALS_SENSOR 1
 #define ENABLE_ORIENTATION_SENSOR 0
 #define ENABLE_ACCEL_SENSOR 0

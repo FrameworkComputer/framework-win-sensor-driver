@@ -226,17 +226,71 @@ Exit:
 NTSTATUS
 OnPrepareHardware(
     _In_ WDFDEVICE Device,
-    _In_ WDFCMRESLIST /*ResourcesRaw*/,
-    _In_ WDFCMRESLIST /*ResourcesTranslated*/
+    _In_ WDFCMRESLIST ResourcesRaw,
+    _In_ WDFCMRESLIST ResourcesTranslated
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
+    PCM_PARTIAL_RESOURCE_DESCRIPTOR desc = NULL;
+    PCM_PARTIAL_RESOURCE_DESCRIPTOR descTranslated = NULL;
     ULONG  i;
     HANDLE Handle;
     DWORD retb{};
     CROSEC_READMEM rm{};
 
     SENSOR_FunctionEnter();
+
+    TraceInformation("%!FUNC! Device 0x%p ResRaw 0x%p ResTrans "
+        "0x%p Count %d\n", Device, ResourcesRaw, ResourcesTranslated,
+        WdfCmResourceListGetCount(ResourcesTranslated));
+    for (i = 0; i < WdfCmResourceListGetCount(ResourcesTranslated); i++) {
+        desc = WdfCmResourceListGetDescriptor(ResourcesRaw, i);
+        descTranslated = WdfCmResourceListGetDescriptor(ResourcesTranslated, i);
+
+        switch (desc->Type) {
+        case CmResourceTypeMemory:
+            TraceInformation("%!FUNC!: found CmResourceTypeMemory resources \n");
+            break;
+        case CmResourceTypePort:
+            TraceInformation("%!FUNC!: found CmResourceTypePort"
+                " resource\n");
+            switch (descTranslated->Type) {
+            case CmResourceTypePort:
+                TraceInformation("Resource Translated Port: (%x) Length: (%d), matching: %d\n",
+                    descTranslated->u.Port.Start.LowPart,
+                    descTranslated->u.Port.Length,
+                    descTranslated->u.Port.Start.LowPart == EC_LPC_ADDR_MEMMAP);
+                break;
+            case CmResourceTypeMemory:
+                TraceInformation("Resource Translated Memory: (%x) Length: (%d)\n",
+                    descTranslated->u.Memory.Start.LowPart,
+                    descTranslated->u.Memory.Length);
+                break;
+            default:
+                TraceInformation("Unhandled resource_type (0x%x)\n",
+                    descTranslated->Type);
+            }
+            break;
+        case CmResourceTypeInterrupt:
+            TraceInformation("%!FUNC!: found CmResourceTypeInterrupt"
+                "resource\n");
+            break;
+
+        case CmResourceTypeConnection:
+            TraceInformation("%!FUNC!: found CmResourceTypeConnection"
+                "resource\n");
+            break;
+
+        default:
+            TraceInformation("%!FUNC!: found resources of type %d"
+                "(CM_RESOURCE_TYPE)\n", desc->Type);
+            break;
+        }
+    }
+
+    if (i == 0) {
+        TraceInformation("%!FUNC!: no cm resources found \n");
+    }
 
     Status = ConnectToEc(Device, &Handle);
     if (!NT_SUCCESS(Status)) {
@@ -429,6 +483,24 @@ OnD0Entry(
 
     SENSOR_FunctionEnter();
 
+    UINT8 EcMem[0x100];
+    for (int offset = 0; offset < 0x100; offset++) {
+        cros_ec_sensors_cmd_read_u8(Device, offset, &EcMem[offset]);
+    }
+    for (int i = 0; i < 0x100-8; i+=8) {
+        TraceInformation(
+            "%02X %02X %02X %02X %02X %02X %02X %02X\n",
+            EcMem[i], EcMem[i+1], EcMem[i+2], EcMem[i+3], EcMem[i+4], EcMem[i + 5], EcMem[i + 6], EcMem[i + 7]
+        );
+    }
+
+    UINT8 data;
+    data = WDF_READ_PORT_UCHAR(Device, (PUCHAR) 0xE00 + 0x20);
+    TraceInformation("Read value %d from port address 0x%d+0x20\n", data,
+        0xE00);
+    data = WDF_READ_PORT_UCHAR(Device, (PUCHAR) 0xE00 + 0x21);
+    TraceInformation("Read value %d from port address 0x%d+0x21\n", data,
+        0xE00);
 
     //
     // Get sensor instances

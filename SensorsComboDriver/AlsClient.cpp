@@ -531,6 +531,15 @@ AlsDevice::GetData(
     TraceInformation("Read ALS value %02x %02x %02x %02x (%f)\n",
         als[0], als[1], als[2], als[3], m_CachedData.Lux);
 
+    UINT8 als[4];
+    als[0] = WDF_READ_PORT_UCHAR(Device, (PUCHAR) 0xE00 + 0x80 + 0);
+    als[1] = WDF_READ_PORT_UCHAR(Device, (PUCHAR) 0xE00 + 0x80 + 1);
+    als[2] = WDF_READ_PORT_UCHAR(Device, (PUCHAR) 0xE00 + 0x80 + 2);
+    als[3] = WDF_READ_PORT_UCHAR(Device, (PUCHAR) 0xE00 + 0x80 + 3);
+    m_CachedData.Lux = (float) (als[0] + (als[1] << 8) + (als[2] << 16) + (als[3] << 24));
+    TraceInformation("Read ALS value %02x %02x %02x %02x (%f)\n",
+        als[0], als[1], als[2], als[3], m_CachedData.Lux);
+
     // new sample?
     if (m_FirstSample != FALSE)
     {

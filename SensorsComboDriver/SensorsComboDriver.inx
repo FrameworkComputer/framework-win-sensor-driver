@@ -37,7 +37,11 @@ SensorsComboDriver.dll = 1,,
 [SensorsComboDriver_Device.NT$ARCH$.10.0...22000]
 ; DisplayName       Section          DeviceId
 ; -----------       -------          --------
-%SensorsComboDriver_DevDesc% = SensorsComboDriver_Inst, umdf2\SensorsComboDriver
+; %SensorsComboDriver_DevDesc% = SensorsComboDriver_Inst, umdf2\SensorsComboDriver
+; ACPI Device with _CRS section that maps the port I/O ranges that we need to access
+; ACPI\FRMWC004
+; ACPI\PNP0C09
+%SensorsComboDriver_DevDesc% = SensorsComboDriver_Inst, ACPI\PNP0C09
 
 [SensorsComboDriver_Inst.NT]
 Include=WUDFRD.inf

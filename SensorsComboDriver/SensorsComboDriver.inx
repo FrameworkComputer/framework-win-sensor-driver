@@ -37,7 +37,7 @@ SensorsComboDriver.dll = 1,,
 [SensorsComboDriver_Device.NT$ARCH$.10.0...22000]
 ; DisplayName       Section          DeviceId
 ; -----------       -------          --------
-%SensorsComboDriver_DevDesc% = SensorsComboDriver_Inst, umdf2\SensorsComboDriver
+%SensorsComboDriver_DevDesc% = SensorsComboDriver_Inst, ACPI\FRMWC006
 
 [SensorsComboDriver_Inst.NT]
 Include=WUDFRD.inf

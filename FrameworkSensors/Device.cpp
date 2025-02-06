@@ -3,7 +3,7 @@
 // Abstract:
 //
 //  This module contains the implementation of WDF callback functions
-//  for combo driver.
+//  for Framework Sensors driver.
 //
 // Environment:
 //
@@ -11,25 +11,31 @@
 
 #include "Clients.h"
 #include "Driver.h"
+#include "EcCommunication.h"
 
 #include <new.h>
+#include <winnt.h>
 
 #include "Device.tmh"
+
+#define ENABLE_ALS_SENSOR 0
+#define ENABLE_ORIENTATION_SENSOR 0
+#define ENABLE_ACCEL_SENSOR 1
 
 //---------------------------------------
 // Declare and map devices below
 //---------------------------------------
 enum Device
 {
-    Device_Als = 0,
-    Device_Bar,
-    Device_GeomagneticOrientation,
-    Device_GravityVector,
-    Device_Gyr,
+#if ENABLE_ALS_SENSOR
+    Device_Als,
+#endif
+#if ENABLE_ORIENTATION_SENSOR
+    Device_SimpleDeviceOrientation,
+#endif
+#if ENABLE_ACCEL_SENSOR
     Device_LinearAccelerometer,
-    Device_Mag,
-    Device_Prx,
-    Device_RelativeFusion,
+#endif
     // Keep this last
     Device_Count
 };
@@ -43,15 +49,15 @@ inline size_t GetDeviceSizeAtIndex(
     size_t result = 0;
     switch (static_cast<Device>(Index))
     {
+#if ENABLE_ALS_SENSOR
         case Device_Als:                    result = sizeof(AlsDevice); break;
-        case Device_Bar:                    result = sizeof(BarDevice); break;
-        case Device_GeomagneticOrientation: result = sizeof(GeomagneticOrientationDevice); break;
-        case Device_GravityVector:          result = sizeof(GravityVectorDevice); break;
-        case Device_Gyr:                    result = sizeof(GyrDevice); break;
+#endif
+#if ENABLE_ORIENTATION_SENSOR
+        case Device_SimpleDeviceOrientation:result = sizeof(SimpleDeviceOrientationDevice); break;
+#endif
+#if ENABLE_ACCEL_SENSOR
         case Device_LinearAccelerometer:    result = sizeof(LinearAccelerometerDevice); break;
-        case Device_Mag:                    result = sizeof(MagDevice); break;
-        case Device_Prx:                    result = sizeof(PrxDevice); break;
-        case Device_RelativeFusion:         result = sizeof(RelativeFusionDevice); break;
+#endif
         default: break; // invalid
     }
     return result;
@@ -64,25 +70,57 @@ void AllocateDeviceAtIndex(
 {
     switch (static_cast<Device>(Index))
     {
+#if ENABLE_ALS_SENSOR
         case Device_Als:                    *ppDevice = new(*ppDevice) AlsDevice; break;
-        case Device_Bar:                    *ppDevice = new(*ppDevice) BarDevice; break;
-        case Device_GeomagneticOrientation: *ppDevice = new(*ppDevice) GeomagneticOrientationDevice; break;
-        case Device_GravityVector:          *ppDevice = new(*ppDevice) GravityVectorDevice; break;
-        case Device_Gyr:                    *ppDevice = new(*ppDevice) GyrDevice; break;
+#endif
+#if ENABLE_ORIENTATIONACCEL_SENSOR
+        case Device_SimpleDeviceOrientation:*ppDevice = new(*ppDevice) SimpleDeviceOrientationDevice; break;
+#endif
+#if ENABLE_ACCEL_SENSOR
         case Device_LinearAccelerometer:    *ppDevice = new(*ppDevice) LinearAccelerometerDevice; break;
-        case Device_Mag:                    *ppDevice = new(*ppDevice) MagDevice; break;
-        case Device_Prx:                    *ppDevice = new(*ppDevice) PrxDevice; break;
-        case Device_RelativeFusion:         *ppDevice = new(*ppDevice) RelativeFusionDevice; break;
+#endif
 
         default: break; // invalid (let driver fail)
     }
 }
 
+NTSTATUS ConnectToEc(
+	_In_ WDFDEVICE FxDevice,
+    _Inout_ HANDLE *Handle
+) {
+    SENSOR_FunctionEnter();
+    NTSTATUS Status = STATUS_SUCCESS;
+
+    UNREFERENCED_PARAMETER(FxDevice);
+
+    *Handle = CreateFileW(
+        LR"(\\.\GLOBALROOT\Device\CrosEC)",
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_OVERLAPPED,
+        NULL);
+
+    if (*Handle == INVALID_HANDLE_VALUE) {
+        Status = STATUS_INVALID_HANDLE;
+        TraceError("COMBO %!FUNC! CreateFileW failed %!STATUS!", Status);
+        goto Exit;
+    }
+
+Exit:
+    SENSOR_FunctionExit(Status);
+
+	return Status;
+}
+
+
+
 //------------------------------------------------------------------------------
 //
 // Function: OnDeviceAdd
 //
-// This routine is the AddDevice entry point for the  combo client
+// This routine is the AddDevice entry point for the  Framework Sensors client
 // driver. This routine is called by the framework in response to AddDevice
 // call from the PnP manager. It will create and initialize the device object
 // to represent a new instance of the sensor client.
@@ -213,8 +251,42 @@ OnPrepareHardware(
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
+    ULONG  i;
+    HANDLE Handle;
+    DWORD retb{};
+    CROSEC_READMEM rm{};
 
     SENSOR_FunctionEnter();
+
+    Status = ConnectToEc(Device, &Handle);
+    if (!NT_SUCCESS(Status)) {
+        TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
+        goto Exit;
+    }
+
+    rm.bytes = 0xfe;
+    rm.offset = 0;
+    Status = DeviceIoControl(Handle,
+        (DWORD) IOCTL_CROSEC_RDMEM,
+        &rm,
+        sizeof(rm),
+        &rm,
+        sizeof(rm),
+        &retb,
+        nullptr);
+    if (!NT_SUCCESS(Status)) {
+        TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
+        goto Exit;
+    }
+
+    UINT8 *EcMem = rm.buffer;
+    for (i = 0; i < 0xfe-16; i+=16) {
+        TraceInformation(
+            "%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+            EcMem[i], EcMem[i+1], EcMem[i+2], EcMem[i+3], EcMem[i+4], EcMem[i + 5], EcMem[i + 6], EcMem[i + 7],
+            EcMem[i + 8], EcMem[i+9], EcMem[i+10], EcMem[i+11], EcMem[i+12], EcMem[i + 13], EcMem[i + 14], EcMem[i + 15]
+        );
+    }
 
     for (ULONG Count = 0; Count < SensorInstanceCount; Count++)
     {
@@ -244,6 +316,8 @@ OnPrepareHardware(
         }
 
         AllocateDeviceAtIndex(Count, &pDevice);
+
+        pDevice->m_CrosEcHandle = Handle;
 
         // Fill out properties
         Status = pDevice->Initialize(Device, SensorInstance);
@@ -345,8 +419,6 @@ Exit:
     return Status;
 }
 
-
-
 //------------------------------------------------------------------------------
 //
 // Function: OnD0Entry
@@ -376,6 +448,7 @@ OnD0Entry(
     NTSTATUS Status = STATUS_SUCCESS;
 
     SENSOR_FunctionEnter();
+
 
     //
     // Get sensor instances

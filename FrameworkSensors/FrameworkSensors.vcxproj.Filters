@@ -3,23 +3,26 @@
   <ItemGroup>
     <Filter Include="Source Files">
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx;*</Extensions>
-      <UniqueIdentifier>{00557774-6CAE-4A42-9465-A85A4F048686}</UniqueIdentifier>
+      <UniqueIdentifier>{657C491B-7C92-4AB8-B003-546E3A3A86FF}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files">
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-      <UniqueIdentifier>{68764800-116B-4343-8B60-49693688236E}</UniqueIdentifier>
+      <UniqueIdentifier>{9D074C38-4627-4BCD-A647-8CEDAA88C3B0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms;man;xml</Extensions>
-      <UniqueIdentifier>{25662F7E-DB14-43DD-84A3-E8B7327B6ECE}</UniqueIdentifier>
+      <UniqueIdentifier>{F78FFA14-EFF9-47BC-83D9-680F26ED1E81}</UniqueIdentifier>
     </Filter>
     <Filter Include="Driver Files">
       <Extensions>inf;inv;inx;mof;mc;</Extensions>
-      <UniqueIdentifier>{372D6D06-B60D-4D04-901A-FC8530D3AC42}</UniqueIdentifier>
+      <UniqueIdentifier>{BC2DC265-BF39-4FD7-AF86-19C090D6C725}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="client.cpp">
+    <ClCompile Include="AlsClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Clients.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="device.cpp">
@@ -28,15 +31,21 @@
     <ClCompile Include="driver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hardwaresimulator.cpp">
+    <ClCompile Include="EcCommunication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <None Include="SimpleDeviceOrientationSensor.def">
+    <ClCompile Include="SimpleDeviceOrientationClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="linearaccelerometerclient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <None Include="FrameworkSensors.def">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="SimpleDeviceOrientationSensor.inx">
+    <Inf Include="FrameworkSensors.inx">
       <Filter>Driver Files</Filter>
     </Inf>
   </ItemGroup>

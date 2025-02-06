@@ -1,0 +1,81 @@
+/*++
+;
+;Copyright (c) Microsoft Corporation.  All rights reserved.
+;Copyright (c) Framework Computer Inc. All rights reserved.
+;
+;Module Name:
+;    FrameworkSensors.INF
+;
+;Abstract:
+;    INF file for installing the Framework Sensor Driver
+;
+;--*/
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = Sensor
+ClassGuid   = {5175D334-C371-4806-B3BA-71FD53C9258D}
+Provider    = %PROVIDER%
+CatalogFile = FrameworkSensors.cat
+DriverVer   = 8/29/2014,2.00.00.03
+PnpLockdown = 1
+
+[SourceDisksNames]
+1 = %MediaDescription%,,,""
+
+[SourceDisksFiles]
+FrameworkSensors.dll = 1,,
+
+[Manufacturer]
+%PROVIDER% = FrameworkSensors_Device, NT$ARCH$.10.0...22000
+
+;*******************************
+; Framework Sensors Driver Install Section
+;*******************************
+
+[FrameworkSensors_Device.NT$ARCH$.10.0...22000]
+; DisplayName       Section          DeviceId
+; -----------       -------          --------
+%FrameworkSensors_DevDesc% = FrameworkSensors_Inst, ACPI\FRMWC006
+
+[FrameworkSensors_Inst.NT]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT
+CopyFiles = FrameworkSensorsCopy
+
+[FrameworkSensorsCopy]
+FrameworkSensors.dll
+
+[FrameworkSensors_Inst.NT.HW]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT.HW
+
+[DestinationDirs]
+;12 == Windows\System32\Drivers\UMDF
+DefaultDestDir = 12,UMDF
+
+;-------------- Service installation
+[FrameworkSensors_Inst.NT.Services]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT.Services
+
+;-------------- WDF specific section
+
+[FrameworkSensors_Inst.NT.Wdf]
+UmdfService              = FrameworkSensors, FrameworkSensors_Install
+UmdfServiceOrder         = FrameworkSensors
+UmdfDirectHardwareAccess = AllowDirectHardwareAccess
+UmdfFileObjectPolicy     = AllowNullAndUnknownFileObjects
+UmdfFsContextUsePolicy   = CannotUseFsContexts
+
+[FrameworkSensors_Install]
+UmdfLibraryVersion       = $UMDFVERSION$
+ServiceBinary            = %12%\UMDF\FrameworkSensors.dll
+UmdfExtensions           = SensorsCx0102
+
+[Strings]
+;Localizable Strings
+MediaDescription           = "Framework Computer Sensor Driver"
+PROVIDER                   = "Framework Computer Inc"
+FrameworkSensors_DevDesc = "Sensor Driver - ALS, Accelerometer, Orientation"
+
+;Non-Localizable Strings

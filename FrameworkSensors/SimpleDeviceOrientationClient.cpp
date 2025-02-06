@@ -6,49 +6,34 @@
 //
 // Environment:
 //
-//  Windows User-Mode Driver Framework (WUDF)
+//  Windows User-Mode Driver Framework (UMDF)
 
 #include "Clients.h"
 
-#include "GyrClient.tmh"
+#include "SimpleDeviceOrientationClient.tmh"
 
-#define SENSORV2_POOL_TAG_GYROSCOPE              '2oyG'
+#define SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER               'sodS'
 
-// Chasis says 5-250Hz but unit test fails if below 250Hz???
-#define Gyr_MinDataInterval_Ms                 (4)        // 250Hz
-#define Gyr_Initial_Threshold_DegreesPerSecond (10.0f)
+#define SimpleDeviceOrientationDevice_Default_MinDataInterval (4)
+#define SimpleDeviceOrientationDevice_Default_Axis_Threshold  (1.0f)
+#define SimpleDeviceOrientationDevice_Axis_Resolution         (4.0f / 65536.0f) // in delta g
+#define SimpleDeviceOrientationDevice_Axis_Minimum            (-2.0f)           // in g
+#define SimpleDeviceOrientationDevice_Axis_Maximum            (2.0f)            // in g
 
-#define GyrDevice_Minimum_DegreesPerSecond     (-2000.0f)
-#define GyrDevice_Maximum_DegreesPerSecond     (2000.0f)
-#define GyrDevice_Precision                    (65536.0f) // 65536 = 2^16, 16 bit data
-#define GyrDevice_Range_DegreesPerSecond      \
-            (GyrDevice_Maximum_DegreesPerSecond - GyrDevice_Minimum_DegreesPerSecond)
-#define GyrDevice_Resolution_DegreesPerSecond \
-            (GyrDevice_Range_DegreesPerSecond / GyrDevice_Precision)
-
-//  Gyroscope Unique ID
-// {61A61B96-1E4C-47C6-8697-654680101446}
-DEFINE_GUID(GUID_GyrDevice_UniqueID,
-    0x61a61b96, 0x1e4c, 0x47c6, 0x86, 0x97, 0x65, 0x46, 0x80, 0x10, 0x14, 0x46);
+// Simple Device Orientation ID
+// {4A303B3E-332A-4044-A35A-282F3D6D56E5}
+DEFINE_GUID(GUID_SimpleDeviceOrientationDevice_UniqueID,
+    0x4a303b3e, 0x332a, 0x4044, 0xa3, 0x5a, 0x28, 0x2f, 0x3d, 0x6d, 0x56,
+    0xe5);
 
 // Sensor data
 typedef enum
 {
-    GYR_DATA_TIMESTAMP = 0,
-    GYR_DATA_X,
-    GYR_DATA_Y,
-    GYR_DATA_Z,
-    GYR_DATA_COUNT
-} GYR_DATA_INDEX;
-
-// Sensor thresholds
-typedef enum
-{
-    GYR_THRESHOLD_X = 0,
-    GYR_THRESHOLD_Y,
-    GYR_THRESHOLD_Z,
-    GYR_THRESHOLD_COUNT
-} GYR_THRESHOLD_INDEX;
+    LINEAR_ACCELEROMETER_DATA_X = 0,
+    LINEAR_ACCELEROMETER_DATA_TIMESTAMP,
+    LINEAR_ACCELEROMETER_DATA_SHAKE,
+    LINEAR_ACCELEROMETER_DATA_COUNT
+} LINEAR_ACCELEROMETER_DATA_INDEX;
 
 //------------------------------------------------------------------------------
 // Function: Initialize
@@ -63,7 +48,7 @@ typedef enum
 //      NTSTATUS code
 //------------------------------------------------------------------------------
 NTSTATUS
-GyrDevice::Initialize(
+SimpleDeviceOrientationDevice::Initialize(
     _In_ WDFDEVICE Device,
     _In_ SENSOROBJECT SensorInstance
     )
@@ -85,7 +70,7 @@ GyrDevice::Initialize(
     Status = WdfWaitLockCreate(WDF_NO_OBJECT_ATTRIBUTES, &m_Lock);
     if (!NT_SUCCESS(Status))
     {
-        TraceError("COMBO %!FUNC! GYR WdfWaitLockCreate failed %!STATUS!", Status);
+        TraceError("COMBO %!FUNC! LAC WdfWaitLockCreate failed %!STATUS!", Status);
         goto Exit;
     }
 
@@ -105,7 +90,7 @@ GyrDevice::Initialize(
         Status = WdfTimerCreate(&TimerConfig, &TimerAttributes, &m_Timer);
         if (!NT_SUCCESS(Status))
         {
-            TraceError("COMBO %!FUNC! GYR WdfTimerCreate failed %!STATUS!", Status);
+            TraceError("COMBO %!FUNC! LAC WdfTimerCreate failed %!STATUS!", Status);
             goto Exit;
         }
     }
@@ -123,13 +108,13 @@ GyrDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_GYROSCOPE,
+                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pEnumerationProperties);
         if (!NT_SUCCESS(Status) || m_pEnumerationProperties == nullptr)
         {
-            TraceError("COMBO %!FUNC! GYR WdfMemoryCreate failed %!STATUS!", Status);
+            TraceError("COMBO %!FUNC! LAC WdfMemoryCreate failed %!STATUS!", Status);
             goto Exit;
         }
 
@@ -137,15 +122,15 @@ GyrDevice::Initialize(
         m_pEnumerationProperties->Count = SENSOR_ENUMERATION_PROPERTIES_COUNT;
 
         m_pEnumerationProperties->List[SENSOR_TYPE_GUID].Key = DEVPKEY_Sensor_Type;
-        InitPropVariantFromCLSID(GUID_SensorType_Gyrometer3D,
+        InitPropVariantFromCLSID(GUID_SensorType_SimpleDeviceOrientation,
                                  &(m_pEnumerationProperties->List[SENSOR_TYPE_GUID].Value));
 
         m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Key = DEVPKEY_Sensor_Manufacturer;
-        InitPropVariantFromString(L"Manufacturer name",
+        InitPropVariantFromString(L"Framework Computer Inc",
                                   &(m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Value));
 
         m_pEnumerationProperties->List[SENSOR_MODEL].Key = DEVPKEY_Sensor_Model;
-        InitPropVariantFromString(L"GYR",
+        InitPropVariantFromString(L"Simple Device Orientation",
                                   &(m_pEnumerationProperties->List[SENSOR_MODEL].Value));
 
         m_pEnumerationProperties->List[SENSOR_CONNECTION_TYPE].Key = DEVPKEY_Sensor_ConnectionType;
@@ -154,7 +139,7 @@ GyrDevice::Initialize(
                                  &(m_pEnumerationProperties->List[SENSOR_CONNECTION_TYPE].Value));
 
         m_pEnumerationProperties->List[SENSOR_PERSISTENT_UNIQUEID].Key = DEVPKEY_Sensor_PersistentUniqueId;
-        InitPropVariantFromCLSID(GUID_GyrDevice_UniqueID,
+        InitPropVariantFromCLSID(GUID_SimpleDeviceOrientationDevice_UniqueID,
                                  &(m_pEnumerationProperties->List[SENSOR_PERSISTENT_UNIQUEID].Value));
 
         m_pEnumerationProperties->List[SENSOR_ISPRIMARY].Key = DEVPKEY_Sensor_IsPrimary;
@@ -168,30 +153,29 @@ GyrDevice::Initialize(
     {
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
-        ULONG Size = SENSOR_PROPERTY_LIST_SIZE(GYR_DATA_COUNT);
+        ULONG Size = SENSOR_PROPERTY_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT);
 
         MemoryHandle = NULL;
         WDF_OBJECT_ATTRIBUTES_INIT(&MemoryAttributes);
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_GYROSCOPE,
+                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pSupportedDataFields);
         if (!NT_SUCCESS(Status) || m_pSupportedDataFields == nullptr)
         {
-            TraceError("COMBO %!FUNC! GYR WdfMemoryCreate failed %!STATUS!", Status);
+            TraceError("COMBO %!FUNC! LAC WdfMemoryCreate failed %!STATUS!", Status);
             goto Exit;
         }
 
         SENSOR_PROPERTY_LIST_INIT(m_pSupportedDataFields, Size);
-        m_pSupportedDataFields->Count = GYR_DATA_COUNT;
+        m_pSupportedDataFields->Count = LINEAR_ACCELEROMETER_DATA_COUNT;
 
-        m_pSupportedDataFields->List[GYR_DATA_TIMESTAMP] = PKEY_SensorData_Timestamp;
-        m_pSupportedDataFields->List[GYR_DATA_X] = PKEY_SensorData_AngularVelocityX_DegreesPerSecond;
-        m_pSupportedDataFields->List[GYR_DATA_Y] = PKEY_SensorData_AngularVelocityY_DegreesPerSecond;
-        m_pSupportedDataFields->List[GYR_DATA_Z] = PKEY_SensorData_AngularVelocityZ_DegreesPerSecond;
+        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP] = PKEY_SensorData_Timestamp;
+        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_X] = PKEY_SensorData_AccelerationX_Gs;
+        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_SHAKE] = PKEY_SensorData_Shake;
     }
 
     //
@@ -200,7 +184,7 @@ GyrDevice::Initialize(
     {
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
-        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(GYR_DATA_COUNT);
+        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT);
         FILETIME Time = {0};
 
         MemoryHandle = NULL;
@@ -208,45 +192,42 @@ GyrDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_GYROSCOPE,
+                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pData);
         if (!NT_SUCCESS(Status) || m_pData == nullptr)
         {
-            TraceError("COMBO %!FUNC! GYR WdfMemoryCreate failed %!STATUS!", Status);
+            TraceError("COMBO %!FUNC! LAC WdfMemoryCreate failed %!STATUS!", Status);
             goto Exit;
         }
 
-        SENSOR_COLLECTION_LIST_INIT(m_pData, Size);
-        m_pData->Count = GYR_DATA_COUNT;
+    SENSOR_COLLECTION_LIST_INIT(m_pData, Size);
+    m_pData->Count = LINEAR_ACCELEROMETER_DATA_COUNT;
 
-        m_pData->List[GYR_DATA_TIMESTAMP].Key = PKEY_SensorData_Timestamp;
-        GetSystemTimePreciseAsFileTime(&Time);
-        InitPropVariantFromFileTime(&Time, &(m_pData->List[GYR_DATA_TIMESTAMP].Value));
+    m_pData->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP].Key = PKEY_SensorData_Timestamp;
+    GetSystemTimePreciseAsFileTime(&Time);
+    InitPropVariantFromFileTime(&Time, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP].Value));
 
-        m_pData->List[GYR_DATA_X].Key = PKEY_SensorData_AngularVelocityX_DegreesPerSecond;
-        InitPropVariantFromFloat(0.0f, &(m_pData->List[GYR_DATA_X].Value));
+    m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
+    InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
 
-        m_pData->List[GYR_DATA_Y].Key = PKEY_SensorData_AngularVelocityY_DegreesPerSecond;
-        InitPropVariantFromFloat(0.0f, &(m_pData->List[GYR_DATA_Y].Value));
+    m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Key = PKEY_SensorData_Shake;
+    InitPropVariantFromBoolean(FALSE, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
 
-        m_pData->List[GYR_DATA_Z].Key = PKEY_SensorData_AngularVelocityZ_DegreesPerSecond;
-        InitPropVariantFromFloat(0.0f, &(m_pData->List[GYR_DATA_Z].Value));
+    m_CachedData.X = 0.0f;
+    m_CachedData.Shake = FALSE;
 
-        m_CachedData.X = 0.0f;
-        m_CachedData.Y = 0.0f;
-        m_CachedData.Z = 0.0f;
-
-        m_LastSample.X = 0.0f;
-        m_LastSample.Y = 0.0f;
-        m_LastSample.Z = 0.0f;
+    m_LastSample.X  = 0.0f;
+    m_LastSample.Shake = FALSE;
     }
 
     //
     // Sensor Properties
     //
     {
+        m_IntervalMs = SimpleDeviceOrientationDevice_Default_MinDataInterval;
+
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
         ULONG Size = SENSOR_COLLECTION_LIST_SIZE(SENSOR_COMMON_PROPERTY_COUNT);
@@ -256,13 +237,13 @@ GyrDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_GYROSCOPE,
+                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pProperties);
         if (!NT_SUCCESS(Status) || m_pProperties == nullptr)
         {
-            TraceError("COMBO %!FUNC! GYR WdfMemoryCreate failed %!STATUS!", Status);
+            TraceError("LAC %!FUNC! WdfMemoryCreate failed %!STATUS!", Status);
             goto Exit;
         }
 
@@ -274,22 +255,20 @@ GyrDevice::Initialize(
                                   &(m_pProperties->List[SENSOR_COMMON_PROPERTY_STATE].Value));
 
         m_pProperties->List[SENSOR_COMMON_PROPERTY_MIN_INTERVAL].Key = PKEY_Sensor_MinimumDataInterval_Ms;
-        InitPropVariantFromUInt32(Gyr_MinDataInterval_Ms,
+        InitPropVariantFromUInt32(SimpleDeviceOrientationDevice_Default_MinDataInterval,
                                   &(m_pProperties->List[SENSOR_COMMON_PROPERTY_MIN_INTERVAL].Value));
-        m_IntervalMs = Gyr_MinDataInterval_Ms;
-        m_MinimumIntervalMs = Gyr_MinDataInterval_Ms;
 
         m_pProperties->List[SENSOR_COMMON_PROPERTY_MAX_DATAFIELDSIZE].Key = PKEY_Sensor_MaximumDataFieldSize_Bytes;
         InitPropVariantFromUInt32(CollectionsListGetMarshalledSize(m_pData),
                                   &(m_pProperties->List[SENSOR_COMMON_PROPERTY_MAX_DATAFIELDSIZE].Value));
 
         m_pProperties->List[SENSOR_COMMON_PROPERTY_TYPE].Key = PKEY_Sensor_Type;
-        InitPropVariantFromCLSID(GUID_SensorType_Gyrometer3D,
-                                 &(m_pProperties->List[SENSOR_COMMON_PROPERTY_TYPE].Value));
+        InitPropVariantFromCLSID(GUID_SensorType_SimpleDeviceOrientation,
+                                     &(m_pProperties->List[SENSOR_COMMON_PROPERTY_TYPE].Value));
     }
 
     //
-    // Data filed properties
+    // Data field properties
     //
     {
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
@@ -301,13 +280,13 @@ GyrDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_GYROSCOPE,
+                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pDataFieldProperties);
         if (!NT_SUCCESS(Status) || m_pDataFieldProperties == nullptr)
         {
-            TraceError("COMBO %!FUNC! GYR WdfMemoryCreate failed %!STATUS!", Status);
+            TraceError("COMBO %!FUNC! LAC WdfMemoryCreate failed %!STATUS!", Status);
             goto Exit;
         }
 
@@ -315,15 +294,15 @@ GyrDevice::Initialize(
         m_pDataFieldProperties->Count = SENSOR_DATA_FIELD_PROPERTY_COUNT;
 
         m_pDataFieldProperties->List[SENSOR_RESOLUTION].Key = PKEY_SensorDataField_Resolution;
-        InitPropVariantFromFloat(GyrDevice_Resolution_DegreesPerSecond,
+        InitPropVariantFromFloat(SimpleDeviceOrientationDevice_Axis_Resolution,
                                  &(m_pDataFieldProperties->List[SENSOR_RESOLUTION].Value));
 
         m_pDataFieldProperties->List[SENSOR_MIN_RANGE].Key = PKEY_SensorDataField_RangeMinimum;
-        InitPropVariantFromFloat(GyrDevice_Minimum_DegreesPerSecond,
+        InitPropVariantFromFloat(SimpleDeviceOrientationDevice_Axis_Minimum,
                                  &(m_pDataFieldProperties->List[SENSOR_MIN_RANGE].Value));
 
         m_pDataFieldProperties->List[SENSOR_MAX_RANGE].Key = PKEY_SensorDataField_RangeMaximum;
-        InitPropVariantFromFloat(GyrDevice_Maximum_DegreesPerSecond,
+        InitPropVariantFromFloat(SimpleDeviceOrientationDevice_Axis_Maximum,
                                  &(m_pDataFieldProperties->List[SENSOR_MAX_RANGE].Value));
     }
 
@@ -333,41 +312,32 @@ GyrDevice::Initialize(
     {
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
-        ULONG Size =  SENSOR_COLLECTION_LIST_SIZE(GYR_THRESHOLD_COUNT);    //  Timestamp and shake do not have thresholds
+
+        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT - 2);    //  Timestamp and shake do not have thresholds
 
         MemoryHandle = NULL;
         WDF_OBJECT_ATTRIBUTES_INIT(&MemoryAttributes);
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_GYROSCOPE,
+                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pThresholds);
         if (!NT_SUCCESS(Status) || m_pThresholds == nullptr)
         {
-            TraceError("COMBO %!FUNC! GYR WdfMemoryCreate failed %!STATUS!", Status);
+            TraceError("COMBO %!FUNC! LAC WdfMemoryCreate failed %!STATUS!", Status);
             goto Exit;
         }
 
         SENSOR_COLLECTION_LIST_INIT(m_pThresholds, Size);
-        m_pThresholds->Count = GYR_THRESHOLD_COUNT;
+        m_pThresholds->Count = LINEAR_ACCELEROMETER_DATA_COUNT - 2;
 
-        m_pThresholds->List[GYR_THRESHOLD_X].Key = PKEY_SensorData_AngularVelocityX_DegreesPerSecond;
-        InitPropVariantFromFloat(Gyr_Initial_Threshold_DegreesPerSecond,
-                                    &(m_pThresholds->List[GYR_THRESHOLD_X].Value));
+        m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
+        InitPropVariantFromFloat(SimpleDeviceOrientationDevice_Default_Axis_Threshold,
+                                 &(m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_X].Value));
 
-        m_pThresholds->List[GYR_THRESHOLD_Y].Key = PKEY_SensorData_AngularVelocityY_DegreesPerSecond;
-        InitPropVariantFromFloat(Gyr_Initial_Threshold_DegreesPerSecond,
-                                    &(m_pThresholds->List[GYR_THRESHOLD_Y].Value));
-
-        m_pThresholds->List[GYR_THRESHOLD_Z].Key = PKEY_SensorData_AngularVelocityZ_DegreesPerSecond;
-        InitPropVariantFromFloat(Gyr_Initial_Threshold_DegreesPerSecond,
-                                    &(m_pThresholds->List[GYR_THRESHOLD_Z].Value));
-
-        m_CachedThresholds.X = Gyr_Initial_Threshold_DegreesPerSecond;
-        m_CachedThresholds.Y = Gyr_Initial_Threshold_DegreesPerSecond;
-        m_CachedThresholds.Z = Gyr_Initial_Threshold_DegreesPerSecond;
+        m_CachedThresholds.X = SimpleDeviceOrientationDevice_Default_Axis_Threshold;
 
         m_FirstSample = TRUE;
     }
@@ -393,12 +363,15 @@ Exit:
 //      NTSTATUS code
 //------------------------------------------------------------------------------
 NTSTATUS
-GyrDevice::GetData(
+SimpleDeviceOrientationDevice::GetData(
+    _In_ HANDLE Device
     )
 {
     BOOLEAN DataReady = FALSE;
     FILETIME TimeStamp = {0};
     NTSTATUS Status = STATUS_SUCCESS;
+
+    UNREFERENCED_PARAMETER(Device);
 
     SENSOR_FunctionEnter();
 
@@ -409,7 +382,7 @@ GyrDevice::GetData(
         if (!NT_SUCCESS(Status))
         {
             m_StartTime = 0;
-            TraceError("COMBO %!FUNC! GYR GetPerformanceTime %!STATUS!", Status);
+            TraceError("COMBO %!FUNC! LAC GetPerformanceTime %!STATUS!", Status);
         }
 
         m_SampleCount = 0;
@@ -420,9 +393,7 @@ GyrDevice::GetData(
     {
         // Compare the change of data to threshold, and only push the data back to
         // clx if the change exceeds threshold. This is usually done in HW.
-        if ( (abs(m_CachedData.X - m_LastSample.X) >= m_CachedThresholds.X) ||
-             (abs(m_CachedData.Y - m_LastSample.Y) >= m_CachedThresholds.Y) ||
-             (abs(m_CachedData.Z - m_LastSample.Z) >= m_CachedThresholds.Z))
+        if ( (abs(m_CachedData.X - m_LastSample.X) >= m_CachedThresholds.X))
         {
             DataReady = TRUE;
         }
@@ -432,16 +403,16 @@ GyrDevice::GetData(
     {
         // update last sample
         m_LastSample.X = m_CachedData.X;
-        m_LastSample.Y = m_CachedData.Y;
-        m_LastSample.Z = m_CachedData.Z;
+
+        m_LastSample.Shake = m_CachedData.Shake;
 
         // push to clx
-        InitPropVariantFromFloat(m_LastSample.X, &(m_pData->List[GYR_DATA_X].Value));
-        InitPropVariantFromFloat(m_LastSample.Y, &(m_pData->List[GYR_DATA_Y].Value));
-        InitPropVariantFromFloat(m_LastSample.Z, &(m_pData->List[GYR_DATA_Z].Value));
+        InitPropVariantFromFloat(m_LastSample.X, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
+
+        InitPropVariantFromBoolean(m_LastSample.Shake, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
 
         GetSystemTimePreciseAsFileTime(&TimeStamp);
-        InitPropVariantFromFileTime(&TimeStamp, &(m_pData->List[GYR_DATA_TIMESTAMP].Value));
+        InitPropVariantFromFileTime(&TimeStamp, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP].Value));
 
         SensorsCxSensorDataReady(m_SensorInstance, m_pData);
         m_FirstSample = FALSE;
@@ -449,7 +420,7 @@ GyrDevice::GetData(
     else
     {
         Status = STATUS_DATA_NOT_ACCEPTED;
-        TraceInformation("COMBO %!FUNC! GYR Data did NOT meet the threshold");
+        TraceInformation("COMBO %!FUNC! LAC Data did NOT meet the threshold");
     }
 
     SENSOR_FunctionExit(Status);
@@ -470,7 +441,7 @@ GyrDevice::GetData(
 //      NTSTATUS code
 //------------------------------------------------------------------------------
 NTSTATUS
-GyrDevice::UpdateCachedThreshold(
+SimpleDeviceOrientationDevice::UpdateCachedThreshold(
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
@@ -478,29 +449,11 @@ GyrDevice::UpdateCachedThreshold(
     SENSOR_FunctionEnter();
 
     Status = PropKeyFindKeyGetFloat(m_pThresholds,
-                                    &PKEY_SensorData_AngularVelocityX_DegreesPerSecond,
+                                    &PKEY_SensorData_AccelerationX_Gs,
                                     &m_CachedThresholds.X);
     if (!NT_SUCCESS(Status))
     {
-        TraceError("COMBO %!FUNC! GYR PropKeyFindKeyGetFloat for X failed! %!STATUS!", Status);
-        goto Exit;
-    }
-
-    Status = PropKeyFindKeyGetFloat(m_pThresholds,
-                                    &PKEY_SensorData_AngularVelocityY_DegreesPerSecond,
-                                    &m_CachedThresholds.Y);
-    if (!NT_SUCCESS(Status))
-    {
-        TraceError("COMBO %!FUNC! GYR PropKeyFindKeyGetFloat for Y failed! %!STATUS!", Status);
-        goto Exit;
-    }
-
-    Status = PropKeyFindKeyGetFloat(m_pThresholds,
-                                    &PKEY_SensorData_AngularVelocityZ_DegreesPerSecond,
-                                    &m_CachedThresholds.Z);
-    if (!NT_SUCCESS(Status))
-    {
-        TraceError("COMBO %!FUNC! GYR PropKeyFindKeyGetFloat for Z failed! %!STATUS!", Status);
+        TraceError("COMBO %!FUNC! LAC PropKeyFindKeyGetFloat for X failed! %!STATUS!", Status);
         goto Exit;
     }
 

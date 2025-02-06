@@ -9,6 +9,7 @@
 //  Windows User-Mode Driver Framework (WUDF)
 
 #include "Clients.h"
+#include "EcCommunication.h"
 
 #include "AlsClient.tmh"
 
@@ -165,7 +166,7 @@ AlsDevice::Initialize(
                                  &(m_pEnumerationProperties->List[SENSOR_TYPE_GUID].Value));
 
         m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Key = DEVPKEY_Sensor_Manufacturer;
-        InitPropVariantFromString(L"Manufacturer name",
+        InitPropVariantFromString(L"Framework Computer Inc",
                                   &(m_pEnumerationProperties->List[SENSOR_MANUFACTURER].Value));
 
         m_pEnumerationProperties->List[SENSOR_MODEL].Key = DEVPKEY_Sensor_Model;
@@ -462,7 +463,6 @@ Exit:
 }
 
 
-
 //------------------------------------------------------------------------------
 // Function: GetData
 //
@@ -478,6 +478,7 @@ Exit:
 //------------------------------------------------------------------------------
 NTSTATUS
 AlsDevice::GetData(
+    _In_ HANDLE Handle
     )
 {
     BOOLEAN DataReady = FALSE;
@@ -485,6 +486,15 @@ AlsDevice::GetData(
     NTSTATUS Status = STATUS_SUCCESS;
 
     SENSOR_FunctionEnter();
+
+    UINT8 als[4] = {0};
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ALS + 0, &als[0]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ALS + 1, &als[1]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ALS + 2, &als[2]);
+    CrosEcReadMemU8(Handle, EC_MEMMAP_ALS + 3, &als[3]);
+    m_CachedData.Lux = (float) (als[0] + (als[1] << 8) + (als[2] << 16) + (als[3] << 24));
+    TraceInformation("Read ALS value %02x %02x %02x %02x (%f)\n",
+        als[0], als[1], als[2], als[3], m_CachedData.Lux);
 
     // new sample?
     if (m_FirstSample != FALSE)

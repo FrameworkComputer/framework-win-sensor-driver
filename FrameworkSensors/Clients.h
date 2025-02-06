@@ -126,6 +126,7 @@ public:
     ULONG                       m_StartTime;
     ULONGLONG                   m_SampleCount;
     BOOLEAN                     m_WakeEnabled;
+    HANDLE                      m_CrosEcHandle;
 
     //
     // Sensor Specific Properties
@@ -142,7 +143,7 @@ public:
     // Sensor specific functions
     //
     virtual NTSTATUS            Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj) = NULL;
-    virtual NTSTATUS            GetData()                                                      = NULL;
+    virtual NTSTATUS            GetData(_In_ HANDLE Handle)                                    = NULL;
     virtual NTSTATUS            UpdateCachedThreshold()                                        = NULL;
     virtual NTSTATUS            EnableWake() { return STATUS_NOT_SUPPORTED; }
     virtual NTSTATUS            DisableWake() { return STATUS_NOT_SUPPORTED; }
@@ -197,126 +198,12 @@ private:
 public:
 
     NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
+    NTSTATUS                    GetData(_In_ HANDLE Device);
     NTSTATUS                    UpdateCachedThreshold();
 
 } AlsDevice, *PAlsDevice;
 
 
-
-//
-// Barometer --------------------------------------------------------------
-//
-typedef class _BarDevice : public _ComboDevice
-{
-private:
-
-    FLOAT                       m_CachedThresholds;
-    FLOAT                       m_CachedData;
-    FLOAT                       m_LastSample;
-
-public:
-
-    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
-    NTSTATUS                    UpdateCachedThreshold();
-
-} BarDevice, *PBarDevice;
-
-
-
-//
-// Gyroscope ------------------------------------------------------------------
-//
-typedef class _GyrDevice : public _ComboDevice
-{
-private:
-
-    VEC3D                       m_CachedThresholds;
-    VEC3D                       m_CachedData;
-    VEC3D                       m_LastSample;
-
-public:
-
-    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
-    NTSTATUS                    UpdateCachedThreshold();
-
-} GyrDevice, *PGyrDevice;
-
-
-
-//
-// Magnetometer ---------------------------------------------------------------
-//
-typedef struct _MagData
-{
-    VEC3D Axis;
-    ULONG Accuracy;
-} MagData, *PMagData;
-
-typedef class _MagDevice : public _ComboDevice
-{
-private:
-
-    VEC3D                       m_CachedThresholds;
-    MagData                     m_CachedData;
-    MagData                     m_LastSample;
-
-public:
-
-    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
-    NTSTATUS                    UpdateCachedThreshold();
-
-} MagDevice, *PMagDevice;
-
-
-
-//
-// Proximity ------------------------------------------------------------------
-//
-typedef struct
-{
-    BOOL Detected;
-    ULONG DistanceMillimeters;
-} PrxData, *PPrxData;
-
-typedef class _PrxDevice : public _ComboDevice
-{
-private:
-
-    PrxData                     m_CachedData;
-    PrxData                     m_LastSample;
-
-public:
-
-    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
-    NTSTATUS                    UpdateCachedThreshold();
-
-} PrxDevice, *PPrxDevice;
-
-
-
-//
-// Relative Fusion ------------------------------------------------------------------
-//
-typedef class _RelativeFusionDevice : public _ComboDevice
-{
-private:
-
-    QUATERNION                  m_CachedThresholds;
-    QUATERNION                  m_CachedData;
-    QUATERNION                  m_LastSample;
-
-public:
-
-    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
-    NTSTATUS                    UpdateCachedThreshold();
-
-} RelativeFusionDevice, *PRelativeFusionDevice;
 
 //
 // Linear Accelerometer --------------------------------------------------------------
@@ -338,52 +225,34 @@ private:
 public:
 
     NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
+    NTSTATUS                    GetData(_In_ HANDLE Device);
     NTSTATUS                    UpdateCachedThreshold();
 
 } LinearAccelerometerDevice, *PLinearAccelerometerDevice;
 
+
+
 //
-// Gravity Vector --------------------------------------------------------------
+// Simple Device Orientation --------------------------------------------------
 //
-typedef class _GravityVectorDevice : public _ComboDevice
+typedef class _SimpleDeviceOrientationDevice : public _ComboDevice
 {
 private:
 
-    VEC3D                       m_CachedThresholds;
-    VEC3D                       m_CachedData;
-    VEC3D                       m_LastSample;
-
-public:
-
-    NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
-    NTSTATUS                    UpdateCachedThreshold();
-
-} GravityVectorDevice, *PGravityVectorDevice;
-
-//
-// Geomagnetic Orientation ------------------------------------------------------------------
-//
-typedef class _GeomagneticOrientationDevice : public _ComboDevice
-{
-private:
-
-    typedef struct _GeomagneticOrientationSample
+    typedef struct _SimpleDeviceOrientationSample
     {
-        QUATERNION Quaternion;
-        FLOAT RotationAngle_Degrees;
-        FLOAT DeclinationAngle_Degrees;
-    } GeomagneticOrientationSample, *PGeomagneticOrientationSample;
+        FLOAT    X;
+        BOOL    Shake;
+    } SimpleDeviceOrientationSample, *PSimpleDeviceOrientationSample;
 
-    GeomagneticOrientationSample                  m_CachedThresholds;
-    GeomagneticOrientationSample                  m_CachedData;
-    GeomagneticOrientationSample                  m_LastSample;
+    SimpleDeviceOrientationSample                       m_CachedThresholds;
+    SimpleDeviceOrientationSample                       m_CachedData;
+    SimpleDeviceOrientationSample                       m_LastSample;
 
 public:
 
     NTSTATUS                    Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
-    NTSTATUS                    GetData();
+    NTSTATUS                    GetData(_In_ HANDLE Device);
     NTSTATUS                    UpdateCachedThreshold();
 
-} GeomagneticOrientationDevice, *PGeomagneticOrientationDevice;
+} SimpleDeviceOrientationDevice, *PSimpleDeviceOrientationDevice;

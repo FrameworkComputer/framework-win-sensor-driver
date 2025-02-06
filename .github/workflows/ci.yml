@@ -13,7 +13,7 @@ jobs:
     #   Solution_Path: SensorsComboDriver\SensorsComboDriver.sln
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v1.0.2

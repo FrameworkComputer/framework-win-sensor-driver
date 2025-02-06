@@ -83,26 +83,26 @@
     <ClCompile Include="AlsClient.cpp; Clients.cpp; device.cpp; driver.cpp; EcCommunication.cpp; SimpleDeviceOrientationClient.cpp; linearaccelerometerclient.cpp; ">
       <WppEnabled>true</WppEnabled>
       <WppDllMacro>true</WppDllMacro>
-      <WppModuleName>SensorsComboDriver</WppModuleName>
+      <WppModuleName>FrameworkSensors</WppModuleName>
       <WppScanConfigurationData>sensorstrace.h</WppScanConfigurationData>
     </ClCompile>
-    <Inf Include="SensorsComboDriver.inx">
+    <Inf Include="FrameworkSensors.inx">
       <Architecture>$(InfArch)</Architecture>
       <SpecifyArchitecture>true</SpecifyArchitecture>
-      <CopyOutput>.\$(IntDir)\SensorsComboDriver.inf</CopyOutput>
+      <CopyOutput>.\$(IntDir)\FrameworkSensors.inf</CopyOutput>
     </Inf>
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>SensorsComboDriver</TargetName>
+    <TargetName>FrameworkSensors</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <TargetName>SensorsComboDriver</TargetName>
+    <TargetName>FrameworkSensors</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>SensorsComboDriver</TargetName>
+    <TargetName>FrameworkSensors</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <TargetName>SensorsComboDriver</TargetName>
+    <TargetName>FrameworkSensors</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

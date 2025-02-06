@@ -2,7 +2,7 @@
 //
 // Abstract:
 //
-//  This module contains the implementation of entry and exit point of combo driver.
+//  This module contains the implementation of entry and exit point of Framework Sensors driver.
 //
 // Environment:
 //

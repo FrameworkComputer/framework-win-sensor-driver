@@ -4,7 +4,7 @@
 ;Copyright (c) Framework Computer Inc. All rights reserved.
 ;
 ;Module Name:
-;    SensorsComboDriver.INF
+;    FrameworkSensors.INF
 ;
 ;Abstract:
 ;    INF file for installing the Framework Sensor Driver
@@ -15,7 +15,7 @@ Signature   = "$WINDOWS NT$"
 Class       = Sensor
 ClassGuid   = {5175D334-C371-4806-B3BA-71FD53C9258D}
 Provider    = %PROVIDER%
-CatalogFile = SensorsComboDriver.cat
+CatalogFile = FrameworkSensors.cat
 DriverVer   = 8/29/2014,2.00.00.03
 PnpLockdown = 1
 
@@ -23,29 +23,29 @@ PnpLockdown = 1
 1 = %MediaDescription%,,,""
 
 [SourceDisksFiles]
-SensorsComboDriver.dll = 1,,
+FrameworkSensors.dll = 1,,
 
 [Manufacturer]
-%PROVIDER% = SensorsComboDriver_Device, NT$ARCH$.10.0...22000
+%PROVIDER% = FrameworkSensors_Device, NT$ARCH$.10.0...22000
 
 ;*******************************
-; Combo Driver Install Section
+; Framework Sensors Driver Install Section
 ;*******************************
 
-[SensorsComboDriver_Device.NT$ARCH$.10.0...22000]
+[FrameworkSensors_Device.NT$ARCH$.10.0...22000]
 ; DisplayName       Section          DeviceId
 ; -----------       -------          --------
-%SensorsComboDriver_DevDesc% = SensorsComboDriver_Inst, ACPI\FRMWC006
+%FrameworkSensors_DevDesc% = FrameworkSensors_Inst, ACPI\FRMWC006
 
-[SensorsComboDriver_Inst.NT]
+[FrameworkSensors_Inst.NT]
 Include=WUDFRD.inf
 Needs=WUDFRD.NT
-CopyFiles = SensorsComboDriverCopy
+CopyFiles = FrameworkSensorsCopy
 
-[SensorsComboDriverCopy]
-SensorsComboDriver.dll
+[FrameworkSensorsCopy]
+FrameworkSensors.dll
 
-[SensorsComboDriver_Inst.NT.HW]
+[FrameworkSensors_Inst.NT.HW]
 Include=WUDFRD.inf
 Needs=WUDFRD.NT.HW
 
@@ -54,28 +54,28 @@ Needs=WUDFRD.NT.HW
 DefaultDestDir = 12,UMDF
 
 ;-------------- Service installation
-[SensorsComboDriver_Inst.NT.Services]
+[FrameworkSensors_Inst.NT.Services]
 Include=WUDFRD.inf
 Needs=WUDFRD.NT.Services
 
 ;-------------- WDF specific section
 
-[SensorsComboDriver_Inst.NT.Wdf]
-UmdfService              = SensorsComboDriver, SensorsComboDriver_Install
-UmdfServiceOrder         = SensorsComboDriver
+[FrameworkSensors_Inst.NT.Wdf]
+UmdfService              = FrameworkSensors, FrameworkSensors_Install
+UmdfServiceOrder         = FrameworkSensors
 UmdfDirectHardwareAccess = AllowDirectHardwareAccess
 UmdfFileObjectPolicy     = AllowNullAndUnknownFileObjects
 UmdfFsContextUsePolicy   = CannotUseFsContexts
 
-[SensorsComboDriver_Install]
+[FrameworkSensors_Install]
 UmdfLibraryVersion       = $UMDFVERSION$
-ServiceBinary            = %12%\UMDF\SensorsComboDriver.dll
+ServiceBinary            = %12%\UMDF\FrameworkSensors.dll
 UmdfExtensions           = SensorsCx0102
 
 [Strings]
 ;Localizable Strings
 MediaDescription           = "Framework Computer Sensor Driver"
 PROVIDER                   = "Framework Computer Inc"
-SensorsComboDriver_DevDesc = "Sensor Driver - ALS, Accelerometer, Orientation"
+FrameworkSensors_DevDesc = "Sensor Driver - ALS, Accelerometer, Orientation"
 
 ;Non-Localizable Strings

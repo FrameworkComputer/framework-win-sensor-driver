@@ -3,7 +3,7 @@
 // Abstract:
 //
 //  This module contains the implementation of WDF callback functions
-//  for combo driver.
+//  for Framework Sensors driver.
 //
 // Environment:
 //
@@ -120,7 +120,7 @@ Exit:
 //
 // Function: OnDeviceAdd
 //
-// This routine is the AddDevice entry point for the  combo client
+// This routine is the AddDevice entry point for the  Framework Sensors client
 // driver. This routine is called by the framework in response to AddDevice
 // call from the PnP manager. It will create and initialize the device object
 // to represent a new instance of the sensor client.

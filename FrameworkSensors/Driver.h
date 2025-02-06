@@ -2,7 +2,7 @@
 //
 // Abstract:
 //
-//  This module contains the type definitions for the combo
+//  This module contains the type definitions for the Framework Sensors
 //  driver callback class.
 //
 // Environment:

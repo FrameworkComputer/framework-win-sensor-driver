@@ -40,12 +40,12 @@
     <ClCompile Include="linearaccelerometerclient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <None Include="SensorsComboDriver.def">
+    <None Include="FrameworkSensors.def">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="SensorsComboDriver.inx">
+    <Inf Include="FrameworkSensors.inx">
       <Filter>Driver Files</Filter>
     </Inf>
   </ItemGroup>

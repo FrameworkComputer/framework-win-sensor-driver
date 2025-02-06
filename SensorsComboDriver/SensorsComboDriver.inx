@@ -1,0 +1,83 @@
+/*++
+;
+;Copyright (c) Microsoft Corporation.  All rights reserved.
+;
+;Module Name:
+;    SensorsComboDriver.INF
+;
+;Abstract:
+;    INF file for installing the Sensors Combo Driver
+;
+;Installation Notes:
+;    Using Devcon: Type "devcon install SensorsComboDriver.inf umdf2\SensorsComboDriver" to install
+;
+;--*/
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = Sensor
+ClassGuid   = {5175D334-C371-4806-B3BA-71FD53C9258D}
+Provider    = %PROVIDER%
+CatalogFile = SensorsComboDriver.cat
+DriverVer   = 8/29/2014,2.00.00.03
+PnpLockdown = 1
+
+[SourceDisksNames]
+1 = %MediaDescription%,,,""
+
+[SourceDisksFiles]
+SensorsComboDriver.dll = 1,,
+
+[Manufacturer]
+%PROVIDER% = SensorsComboDriver_Device, NT$ARCH$.10.0...22000
+
+;*******************************
+; Combo Driver Install Section
+;*******************************
+
+[SensorsComboDriver_Device.NT$ARCH$.10.0...22000]
+; DisplayName       Section          DeviceId
+; -----------       -------          --------
+%SensorsComboDriver_DevDesc% = SensorsComboDriver_Inst, umdf2\SensorsComboDriver
+
+[SensorsComboDriver_Inst.NT]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT
+CopyFiles = SensorsComboDriverCopy
+
+[SensorsComboDriverCopy]
+SensorsComboDriver.dll
+
+[SensorsComboDriver_Inst.NT.HW]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT.HW
+
+[DestinationDirs]
+;12 == Windows\System32\Drivers\UMDF
+DefaultDestDir = 12,UMDF
+
+;-------------- Service installation
+[SensorsComboDriver_Inst.NT.Services]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT.Services
+
+;-------------- WDF specific section
+
+[SensorsComboDriver_Inst.NT.Wdf]
+UmdfService              = SensorsComboDriver, SensorsComboDriver_Install
+UmdfServiceOrder         = SensorsComboDriver
+UmdfDirectHardwareAccess = AllowDirectHardwareAccess
+UmdfFileObjectPolicy     = AllowNullAndUnknownFileObjects
+UmdfFsContextUsePolicy   = CannotUseFsContexts
+
+[SensorsComboDriver_Install]
+UmdfLibraryVersion       = $UMDFVERSION$
+ServiceBinary            = %12%\UMDF\SensorsComboDriver.dll
+UmdfExtensions           = SensorsCx0102
+
+[Strings]
+;Localizable Strings
+MediaDescription           = "Windows Sensors Combo Driver"
+PROVIDER                   = "Manufacturer Name"
+SensorsComboDriver_DevDesc = "Sensors Combo Driver - Ambient Light, Barometer, Gyroscope, Magnetometer, Proximity, and Relative Fusion, and more."
+
+;Non-Localizable Strings

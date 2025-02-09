@@ -278,7 +278,7 @@ AccelerometerDevice::Initialize(
                                   &(m_pProperties->List[SENSOR_COMMON_PROPERTY_MAX_DATAFIELDSIZE].Value));
 
         m_pProperties->List[SENSOR_COMMON_PROPERTY_TYPE].Key = PKEY_Sensor_Type;
-        InitPropVariantFromCLSID(GUID_SensorType_LinearAccelerometer,
+        InitPropVariantFromCLSID(GUID_SensorType_Accelerometer3D,
                                      &(m_pProperties->List[SENSOR_COMMON_PROPERTY_TYPE].Value));
     }
 

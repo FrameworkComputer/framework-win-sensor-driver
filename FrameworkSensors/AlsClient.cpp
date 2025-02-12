@@ -29,9 +29,9 @@
 #define AlsDevice_Resolution_Lux                  (AlsDevice_Range_Lux / AlsDevice_Precision)
 
 // Ambient Light Sensor Unique ID
-// {2D2A4524-51E3-4E68-9B0F-5CAEDFB12C02}
+// {506AC61B-C762-499E-A848-685FC45DF39F}
 DEFINE_GUID(GUID_AlsDevice_UniqueID,
-    0x2d2a4524, 0x51e3, 0x4e68, 0x9b, 0xf, 0x5c, 0xae, 0xdf, 0xb1, 0x2c, 0x2);
+    0x506ac61b, 0xc762, 0x499e, 0xa8, 0x48, 0x68, 0x5f, 0xc4, 0x5d, 0xf3, 0x9f);
 
 // Sensor data
 typedef enum

@@ -206,21 +206,21 @@ public:
 
 
 //
-// Linear Accelerometer --------------------------------------------------------------
+// Accelerometer --------------------------------------------------------------
 //
-typedef class _LinearAccelerometerDevice : public _ComboDevice
+typedef class _AccelerometerDevice : public _ComboDevice
 {
 private:
 
-    typedef struct _LinearAccelerometerSample
+    typedef struct _AccelerometerSample
     {
         VEC3D   Axis;
         BOOL    Shake;
-    } LinearAccelerometerSample, *PLinearAccelerometerSample;
+    } AccelerometerSample, *PAccelerometerSample;
 
-    LinearAccelerometerSample                       m_CachedThresholds;
-    LinearAccelerometerSample                       m_CachedData;
-    LinearAccelerometerSample                       m_LastSample;
+    AccelerometerSample                       m_CachedThresholds;
+    AccelerometerSample                       m_CachedData;
+    AccelerometerSample                       m_LastSample;
 
 public:
 
@@ -228,7 +228,7 @@ public:
     NTSTATUS                    GetData(_In_ HANDLE Device);
     NTSTATUS                    UpdateCachedThreshold();
 
-} LinearAccelerometerDevice, *PLinearAccelerometerDevice;
+} AccelerometerDevice, *PAccelerometerDevice;
 
 
 

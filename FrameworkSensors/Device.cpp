@@ -34,7 +34,7 @@ enum Device
     Device_SimpleDeviceOrientation,
 #endif
 #if ENABLE_ACCEL_SENSOR
-    Device_LinearAccelerometer,
+    Device_Accelerometer,
 #endif
     // Keep this last
     Device_Count
@@ -56,7 +56,7 @@ inline size_t GetDeviceSizeAtIndex(
         case Device_SimpleDeviceOrientation:result = sizeof(SimpleDeviceOrientationDevice); break;
 #endif
 #if ENABLE_ACCEL_SENSOR
-        case Device_LinearAccelerometer:    result = sizeof(LinearAccelerometerDevice); break;
+        case Device_Accelerometer:    result = sizeof(AccelerometerDevice); break;
 #endif
         default: break; // invalid
     }
@@ -77,7 +77,7 @@ void AllocateDeviceAtIndex(
         case Device_SimpleDeviceOrientation:*ppDevice = new(*ppDevice) SimpleDeviceOrientationDevice; break;
 #endif
 #if ENABLE_ACCEL_SENSOR
-        case Device_LinearAccelerometer:    *ppDevice = new(*ppDevice) LinearAccelerometerDevice; break;
+        case Device_Accelerometer:    *ppDevice = new(*ppDevice) AccelerometerDevice; break;
 #endif
 
         default: break; // invalid (let driver fail)

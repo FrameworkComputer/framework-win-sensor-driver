@@ -11,31 +11,32 @@
 #include "Clients.h"
 #include "EcCommunication.h"
 
-#include "LinearAccelerometerClient.tmh"
+#include "AccelerometerClient.tmh"
 
-#define SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER               '2CaL'
+#define SENSORV2_POOL_TAG_ACCELEROMETER               '2CaL'
 
-#define LinearAccelerometerDevice_Default_MinDataInterval (4)
-#define LinearAccelerometerDevice_Default_Axis_Threshold  (1.0f)
-#define LinearAccelerometerDevice_Axis_Resolution         (4.0f / 65536.0f) // in delta g
-#define LinearAccelerometerDevice_Axis_Minimum            (-2.0f)           // in g
-#define LinearAccelerometerDevice_Axis_Maximum            (2.0f)            // in g
+#define AccelerometerDevice_Default_MinDataInterval (4)
+#define AccelerometerDevice_Default_Axis_Threshold  (1.0f)
+#define AccelerometerDevice_Axis_Resolution         (4.0f / 65536.0f) // in delta g
+#define AccelerometerDevice_Axis_Minimum            (-2.0f)           // in g
+#define AccelerometerDevice_Axis_Maximum            (2.0f)            // in g
 
-// Linear Accelerometer Unique ID
+// TODO: New GUID for this?
+// Accelerometer Unique ID
 // {2BAAA1A7-6795-42A0-B830-82526CFD28D1}
-DEFINE_GUID(GUID_LinearAccelerometerDevice_UniqueID,
+DEFINE_GUID(GUID_AccelerometerDevice_UniqueID,
     0x2baaa1a7, 0x6795, 0x42a0, 0xb8, 0x30, 0x82, 0x52, 0x6c, 0xfd, 0x28, 0xd1);
 
 // Sensor data
 typedef enum
 {
-    LINEAR_ACCELEROMETER_DATA_X = 0,
-    LINEAR_ACCELEROMETER_DATA_Y,
-    LINEAR_ACCELEROMETER_DATA_Z,
-    LINEAR_ACCELEROMETER_DATA_TIMESTAMP,
-    LINEAR_ACCELEROMETER_DATA_SHAKE,
-    LINEAR_ACCELEROMETER_DATA_COUNT
-} LINEAR_ACCELEROMETER_DATA_INDEX;
+    ACCELEROMETER_DATA_X = 0,
+    ACCELEROMETER_DATA_Y,
+    ACCELEROMETER_DATA_Z,
+    ACCELEROMETER_DATA_TIMESTAMP,
+    ACCELEROMETER_DATA_SHAKE,
+    ACCELEROMETER_DATA_COUNT
+} ACCELEROMETER_DATA_INDEX;
 
 //------------------------------------------------------------------------------
 // Function: Initialize
@@ -50,7 +51,7 @@ typedef enum
 //      NTSTATUS code
 //------------------------------------------------------------------------------
 NTSTATUS
-LinearAccelerometerDevice::Initialize(
+AccelerometerDevice::Initialize(
     _In_ WDFDEVICE Device,
     _In_ SENSOROBJECT SensorInstance
     )
@@ -110,7 +111,7 @@ LinearAccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 SENSORV2_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pEnumerationProperties);
@@ -141,7 +142,7 @@ LinearAccelerometerDevice::Initialize(
                                  &(m_pEnumerationProperties->List[SENSOR_CONNECTION_TYPE].Value));
 
         m_pEnumerationProperties->List[SENSOR_PERSISTENT_UNIQUEID].Key = DEVPKEY_Sensor_PersistentUniqueId;
-        InitPropVariantFromCLSID(GUID_LinearAccelerometerDevice_UniqueID,
+        InitPropVariantFromCLSID(GUID_AccelerometerDevice_UniqueID,
                                  &(m_pEnumerationProperties->List[SENSOR_PERSISTENT_UNIQUEID].Value));
 
         m_pEnumerationProperties->List[SENSOR_ISPRIMARY].Key = DEVPKEY_Sensor_IsPrimary;
@@ -155,14 +156,14 @@ LinearAccelerometerDevice::Initialize(
     {
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
-        ULONG Size = SENSOR_PROPERTY_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT);
+        ULONG Size = SENSOR_PROPERTY_LIST_SIZE(ACCELEROMETER_DATA_COUNT);
 
         MemoryHandle = NULL;
         WDF_OBJECT_ATTRIBUTES_INIT(&MemoryAttributes);
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 SENSORV2_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pSupportedDataFields);
@@ -173,13 +174,13 @@ LinearAccelerometerDevice::Initialize(
         }
 
         SENSOR_PROPERTY_LIST_INIT(m_pSupportedDataFields, Size);
-        m_pSupportedDataFields->Count = LINEAR_ACCELEROMETER_DATA_COUNT;
+        m_pSupportedDataFields->Count = ACCELEROMETER_DATA_COUNT;
 
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP] = PKEY_SensorData_Timestamp;
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_X] = PKEY_SensorData_AccelerationX_Gs;
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_Y] = PKEY_SensorData_AccelerationY_Gs;
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_Z] = PKEY_SensorData_AccelerationZ_Gs;
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_SHAKE] = PKEY_SensorData_Shake;
+        m_pSupportedDataFields->List[ACCELEROMETER_DATA_TIMESTAMP] = PKEY_SensorData_Timestamp;
+        m_pSupportedDataFields->List[ACCELEROMETER_DATA_X] = PKEY_SensorData_AccelerationX_Gs;
+        m_pSupportedDataFields->List[ACCELEROMETER_DATA_Y] = PKEY_SensorData_AccelerationY_Gs;
+        m_pSupportedDataFields->List[ACCELEROMETER_DATA_Z] = PKEY_SensorData_AccelerationZ_Gs;
+        m_pSupportedDataFields->List[ACCELEROMETER_DATA_SHAKE] = PKEY_SensorData_Shake;
     }
 
     //
@@ -188,7 +189,7 @@ LinearAccelerometerDevice::Initialize(
     {
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
-        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT);
+        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(ACCELEROMETER_DATA_COUNT);
         FILETIME Time = {0};
 
         MemoryHandle = NULL;
@@ -196,7 +197,7 @@ LinearAccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 SENSORV2_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pData);
@@ -207,23 +208,23 @@ LinearAccelerometerDevice::Initialize(
         }
 
     SENSOR_COLLECTION_LIST_INIT(m_pData, Size);
-    m_pData->Count = LINEAR_ACCELEROMETER_DATA_COUNT;
+    m_pData->Count = ACCELEROMETER_DATA_COUNT;
 
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP].Key = PKEY_SensorData_Timestamp;
+    m_pData->List[ACCELEROMETER_DATA_TIMESTAMP].Key = PKEY_SensorData_Timestamp;
     GetSystemTimePreciseAsFileTime(&Time);
-    InitPropVariantFromFileTime(&Time, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP].Value));
+    InitPropVariantFromFileTime(&Time, &(m_pData->List[ACCELEROMETER_DATA_TIMESTAMP].Value));
 
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
-    InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
+    m_pData->List[ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
+    InitPropVariantFromFloat(0.0, &(m_pData->List[ACCELEROMETER_DATA_X].Value));
 
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_Y].Key = PKEY_SensorData_AccelerationY_Gs;
-    InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Y].Value));
+    m_pData->List[ACCELEROMETER_DATA_Y].Key = PKEY_SensorData_AccelerationY_Gs;
+    InitPropVariantFromFloat(0.0, &(m_pData->List[ACCELEROMETER_DATA_Y].Value));
 
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_Z].Key = PKEY_SensorData_AccelerationZ_Gs;
-    InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Z].Value));
+    m_pData->List[ACCELEROMETER_DATA_Z].Key = PKEY_SensorData_AccelerationZ_Gs;
+    InitPropVariantFromFloat(0.0, &(m_pData->List[ACCELEROMETER_DATA_Z].Value));
 
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Key = PKEY_SensorData_Shake;
-    InitPropVariantFromBoolean(FALSE, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
+    m_pData->List[ACCELEROMETER_DATA_SHAKE].Key = PKEY_SensorData_Shake;
+    InitPropVariantFromBoolean(FALSE, &(m_pData->List[ACCELEROMETER_DATA_SHAKE].Value));
 
     m_CachedData.Axis.X = 0.0f;
     m_CachedData.Axis.Y = 0.0f;
@@ -240,7 +241,7 @@ LinearAccelerometerDevice::Initialize(
     // Sensor Properties
     //
     {
-        m_IntervalMs = LinearAccelerometerDevice_Default_MinDataInterval;
+        m_IntervalMs = AccelerometerDevice_Default_MinDataInterval;
 
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
@@ -251,7 +252,7 @@ LinearAccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 SENSORV2_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pProperties);
@@ -269,7 +270,7 @@ LinearAccelerometerDevice::Initialize(
                                   &(m_pProperties->List[SENSOR_COMMON_PROPERTY_STATE].Value));
 
         m_pProperties->List[SENSOR_COMMON_PROPERTY_MIN_INTERVAL].Key = PKEY_Sensor_MinimumDataInterval_Ms;
-        InitPropVariantFromUInt32(LinearAccelerometerDevice_Default_MinDataInterval,
+        InitPropVariantFromUInt32(AccelerometerDevice_Default_MinDataInterval,
                                   &(m_pProperties->List[SENSOR_COMMON_PROPERTY_MIN_INTERVAL].Value));
 
         m_pProperties->List[SENSOR_COMMON_PROPERTY_MAX_DATAFIELDSIZE].Key = PKEY_Sensor_MaximumDataFieldSize_Bytes;
@@ -277,7 +278,7 @@ LinearAccelerometerDevice::Initialize(
                                   &(m_pProperties->List[SENSOR_COMMON_PROPERTY_MAX_DATAFIELDSIZE].Value));
 
         m_pProperties->List[SENSOR_COMMON_PROPERTY_TYPE].Key = PKEY_Sensor_Type;
-        InitPropVariantFromCLSID(GUID_SensorType_LinearAccelerometer,
+        InitPropVariantFromCLSID(GUID_SensorType_Accelerometer3D,
                                      &(m_pProperties->List[SENSOR_COMMON_PROPERTY_TYPE].Value));
     }
 
@@ -294,7 +295,7 @@ LinearAccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 SENSORV2_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pDataFieldProperties);
@@ -308,15 +309,15 @@ LinearAccelerometerDevice::Initialize(
         m_pDataFieldProperties->Count = SENSOR_DATA_FIELD_PROPERTY_COUNT;
 
         m_pDataFieldProperties->List[SENSOR_RESOLUTION].Key = PKEY_SensorDataField_Resolution;
-        InitPropVariantFromFloat(LinearAccelerometerDevice_Axis_Resolution,
+        InitPropVariantFromFloat(AccelerometerDevice_Axis_Resolution,
                                  &(m_pDataFieldProperties->List[SENSOR_RESOLUTION].Value));
 
         m_pDataFieldProperties->List[SENSOR_MIN_RANGE].Key = PKEY_SensorDataField_RangeMinimum;
-        InitPropVariantFromFloat(LinearAccelerometerDevice_Axis_Minimum,
+        InitPropVariantFromFloat(AccelerometerDevice_Axis_Minimum,
                                  &(m_pDataFieldProperties->List[SENSOR_MIN_RANGE].Value));
 
         m_pDataFieldProperties->List[SENSOR_MAX_RANGE].Key = PKEY_SensorDataField_RangeMaximum;
-        InitPropVariantFromFloat(LinearAccelerometerDevice_Axis_Maximum,
+        InitPropVariantFromFloat(AccelerometerDevice_Axis_Maximum,
                                  &(m_pDataFieldProperties->List[SENSOR_MAX_RANGE].Value));
     }
 
@@ -327,14 +328,14 @@ LinearAccelerometerDevice::Initialize(
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
 
-        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT - 2);    //  Timestamp and shake do not have thresholds
+        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(ACCELEROMETER_DATA_COUNT - 2);    //  Timestamp and shake do not have thresholds
 
         MemoryHandle = NULL;
         WDF_OBJECT_ATTRIBUTES_INIT(&MemoryAttributes);
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 SENSORV2_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pThresholds);
@@ -345,23 +346,23 @@ LinearAccelerometerDevice::Initialize(
         }
 
         SENSOR_COLLECTION_LIST_INIT(m_pThresholds, Size);
-        m_pThresholds->Count = LINEAR_ACCELEROMETER_DATA_COUNT - 2;
+        m_pThresholds->Count = ACCELEROMETER_DATA_COUNT - 2;
 
-        m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
-        InitPropVariantFromFloat(LinearAccelerometerDevice_Default_Axis_Threshold,
-                                 &(m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_X].Value));
+        m_pThresholds->List[ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
+        InitPropVariantFromFloat(AccelerometerDevice_Default_Axis_Threshold,
+                                 &(m_pThresholds->List[ACCELEROMETER_DATA_X].Value));
 
-        m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Y].Key = PKEY_SensorData_AccelerationY_Gs;
-        InitPropVariantFromFloat(LinearAccelerometerDevice_Default_Axis_Threshold,
-                                 &(m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Y].Value));
+        m_pThresholds->List[ACCELEROMETER_DATA_Y].Key = PKEY_SensorData_AccelerationY_Gs;
+        InitPropVariantFromFloat(AccelerometerDevice_Default_Axis_Threshold,
+                                 &(m_pThresholds->List[ACCELEROMETER_DATA_Y].Value));
 
-        m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Z].Key = PKEY_SensorData_AccelerationZ_Gs;
-        InitPropVariantFromFloat(LinearAccelerometerDevice_Default_Axis_Threshold,
-                                 &(m_pThresholds->List[LINEAR_ACCELEROMETER_DATA_Z].Value));
+        m_pThresholds->List[ACCELEROMETER_DATA_Z].Key = PKEY_SensorData_AccelerationZ_Gs;
+        InitPropVariantFromFloat(AccelerometerDevice_Default_Axis_Threshold,
+                                 &(m_pThresholds->List[ACCELEROMETER_DATA_Z].Value));
 
-        m_CachedThresholds.Axis.X = LinearAccelerometerDevice_Default_Axis_Threshold;
-        m_CachedThresholds.Axis.Y = LinearAccelerometerDevice_Default_Axis_Threshold;
-        m_CachedThresholds.Axis.Z = LinearAccelerometerDevice_Default_Axis_Threshold;
+        m_CachedThresholds.Axis.X = AccelerometerDevice_Default_Axis_Threshold;
+        m_CachedThresholds.Axis.Y = AccelerometerDevice_Default_Axis_Threshold;
+        m_CachedThresholds.Axis.Z = AccelerometerDevice_Default_Axis_Threshold;
 
         m_FirstSample = TRUE;
     }
@@ -387,7 +388,7 @@ Exit:
 //      NTSTATUS code
 //------------------------------------------------------------------------------
 NTSTATUS
-LinearAccelerometerDevice::GetData(
+AccelerometerDevice::GetData(
     _In_ HANDLE Handle
     )
 {
@@ -468,14 +469,14 @@ LinearAccelerometerDevice::GetData(
         m_LastSample.Shake = m_CachedData.Shake;
 
         // push to clx
-        InitPropVariantFromFloat(m_LastSample.Axis.X, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
-        InitPropVariantFromFloat(m_LastSample.Axis.Y, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Y].Value));
-        InitPropVariantFromFloat(m_LastSample.Axis.Z, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_Z].Value));
+        InitPropVariantFromFloat(m_LastSample.Axis.X, &(m_pData->List[ACCELEROMETER_DATA_X].Value));
+        InitPropVariantFromFloat(m_LastSample.Axis.Y, &(m_pData->List[ACCELEROMETER_DATA_Y].Value));
+        InitPropVariantFromFloat(m_LastSample.Axis.Z, &(m_pData->List[ACCELEROMETER_DATA_Z].Value));
 
-        InitPropVariantFromBoolean(m_LastSample.Shake, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
+        InitPropVariantFromBoolean(m_LastSample.Shake, &(m_pData->List[ACCELEROMETER_DATA_SHAKE].Value));
 
         GetSystemTimePreciseAsFileTime(&TimeStamp);
-        InitPropVariantFromFileTime(&TimeStamp, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP].Value));
+        InitPropVariantFromFileTime(&TimeStamp, &(m_pData->List[ACCELEROMETER_DATA_TIMESTAMP].Value));
 
         SensorsCxSensorDataReady(m_SensorInstance, m_pData);
         m_FirstSample = FALSE;
@@ -504,7 +505,7 @@ LinearAccelerometerDevice::GetData(
 //      NTSTATUS code
 //------------------------------------------------------------------------------
 NTSTATUS
-LinearAccelerometerDevice::UpdateCachedThreshold(
+AccelerometerDevice::UpdateCachedThreshold(
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;

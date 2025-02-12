@@ -37,7 +37,7 @@
     <ClCompile Include="SimpleDeviceOrientationClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="linearaccelerometerclient.cpp">
+    <ClCompile Include="AccelerometerClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <None Include="FrameworkSensors.def">

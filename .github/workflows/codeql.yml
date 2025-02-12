@@ -29,10 +29,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-      - name: Install Nuget Packages
-        run: nuget restore .\packages.config -PackagesDirectory .\packages\
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -40,6 +36,7 @@ jobs:
           languages: ${{ matrix.language }}
           config-file: microsoft/Windows-Driver-Developer-Supplemental-Tools/config/codeql-config.yml@development
           packs: +microsoft/windows-drivers@1.2.0-beta
+
       - name: Retrieve and build all available solutions
         run: |
           msbuild FrameworkSensors\FrameworkSensors.sln /property:Configuration=Debug /property:Platform=x64

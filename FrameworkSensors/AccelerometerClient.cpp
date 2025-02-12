@@ -1,4 +1,5 @@
 // Copyright (C) Microsoft Corporation, All Rights Reserved.
+// Copyright (C) Framework Computer Inc, All Rights Reserved.
 //
 // Abstract:
 //
@@ -13,7 +14,7 @@
 
 #include "AccelerometerClient.tmh"
 
-#define SENSORV2_POOL_TAG_ACCELEROMETER               '2CaL'
+#define FWK_SENSORS_POOL_TAG_ACCELEROMETER          'ccAF'
 
 #define AccelerometerDevice_Default_MinDataInterval (4)
 #define AccelerometerDevice_Default_Axis_Threshold  (1.0f)
@@ -21,11 +22,10 @@
 #define AccelerometerDevice_Axis_Minimum            (-2.0f)           // in g
 #define AccelerometerDevice_Axis_Maximum            (2.0f)            // in g
 
-// TODO: New GUID for this?
 // Accelerometer Unique ID
-// {2BAAA1A7-6795-42A0-B830-82526CFD28D1}
+// {A931067B-D450-42A4-8B20-2647D4CA9D2D}
 DEFINE_GUID(GUID_AccelerometerDevice_UniqueID,
-    0x2baaa1a7, 0x6795, 0x42a0, 0xb8, 0x30, 0x82, 0x52, 0x6c, 0xfd, 0x28, 0xd1);
+    0xa931067b, 0xd450, 0x42a4, 0x8b, 0x20, 0x26, 0x47, 0xd4, 0xca, 0x9d, 0x2d);
 
 // Sensor data
 typedef enum
@@ -111,7 +111,7 @@ AccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pEnumerationProperties);
@@ -163,7 +163,7 @@ AccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pSupportedDataFields);
@@ -197,7 +197,7 @@ AccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pData);
@@ -252,7 +252,7 @@ AccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pProperties);
@@ -295,7 +295,7 @@ AccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pDataFieldProperties);
@@ -335,7 +335,7 @@ AccelerometerDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ACCELEROMETER,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pThresholds);

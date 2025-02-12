@@ -1,4 +1,5 @@
 //Copyright (C) Microsoft Corporation, All Rights Reserved
+//Copyright (C) Framework Computer Inc, All Rights Reserved
 //
 //Abstract:
 //
@@ -16,19 +17,20 @@ extern "C" {
 
 // Define the tracing flags.
 //
-// Tracing GUID - 3C773167-F26D-4F72-A1DE-95F1FD795840
+// Tracing GUID - B915AE22-198E-4CF7-BF4D-395FAD3F645A
 
-#define WPP_CONTROL_GUIDS                                                               \
-    WPP_DEFINE_CONTROL_GUID(                                                            \
-        SimpleDeviceOrientationSensorTraceGuid, (3C773167,F26D,4F72,A1DE,95F1FD795840), \
-        WPP_DEFINE_BIT(EntryExit)                                                       \
-        WPP_DEFINE_BIT(DataFlow)                                                        \
-        WPP_DEFINE_BIT(Verbose)                                                         \
-        WPP_DEFINE_BIT(Information)                                                     \
-        WPP_DEFINE_BIT(Warning)                                                         \
-        WPP_DEFINE_BIT(Error)                                                           \
-        WPP_DEFINE_BIT(Fatal)                                                           \
-        WPP_DEFINE_BIT(DriverStatus)                                                    \
+
+#define WPP_CONTROL_GUIDS                                                  \
+    WPP_DEFINE_CONTROL_GUID(                                               \
+        FrameworkSensorsTraceGuid, (B915AE22,198E,4CF7,BF4D,395FAD3F645A), \
+        WPP_DEFINE_BIT(EntryExit)                                          \
+        WPP_DEFINE_BIT(DataFlow)                                           \
+        WPP_DEFINE_BIT(Verbose)                                            \
+        WPP_DEFINE_BIT(Information)                                        \
+        WPP_DEFINE_BIT(Warning)                                            \
+        WPP_DEFINE_BIT(Error)                                              \
+        WPP_DEFINE_BIT(Fatal)                                              \
+        WPP_DEFINE_BIT(DriverStatus)                                       \
         )
 
 #define WPP_FLAG_LEVEL_LOGGER(flag, level)      WPP_LEVEL_LOGGER(flag)

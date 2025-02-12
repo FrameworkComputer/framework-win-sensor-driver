@@ -12,7 +12,7 @@
 
 #include "SimpleDeviceOrientationClient.tmh"
 
-#define SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER               'sodS'
+#define FWK_SENSORS_POOL_TAG_ORIENTATION                      'irOF'
 
 #define SimpleDeviceOrientationDevice_Default_MinDataInterval (4)
 #define SimpleDeviceOrientationDevice_Default_Axis_Threshold  (1.0f)
@@ -21,10 +21,9 @@
 #define SimpleDeviceOrientationDevice_Axis_Maximum            (2.0f)            // in g
 
 // Simple Device Orientation ID
-// {4A303B3E-332A-4044-A35A-282F3D6D56E5}
+// {D1FCD247-5848-433A-9129-4C0B93979BE4}
 DEFINE_GUID(GUID_SimpleDeviceOrientationDevice_UniqueID,
-    0x4a303b3e, 0x332a, 0x4044, 0xa3, 0x5a, 0x28, 0x2f, 0x3d, 0x6d, 0x56,
-    0xe5);
+    0xd1fcd247, 0x5848, 0x433a, 0x91, 0x29, 0x4c, 0xb, 0x93, 0x97, 0x9b, 0xe4);
 
 // Sensor data
 typedef enum
@@ -108,7 +107,7 @@ SimpleDeviceOrientationDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ORIENTATION,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pEnumerationProperties);
@@ -160,7 +159,7 @@ SimpleDeviceOrientationDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ORIENTATION,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pSupportedDataFields);
@@ -192,7 +191,7 @@ SimpleDeviceOrientationDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ORIENTATION,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pData);
@@ -237,7 +236,7 @@ SimpleDeviceOrientationDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ORIENTATION,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pProperties);
@@ -280,7 +279,7 @@ SimpleDeviceOrientationDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ORIENTATION,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pDataFieldProperties);
@@ -320,7 +319,7 @@ SimpleDeviceOrientationDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_LINEAR_ACCELEROMETER,
+                                 FWK_SENSORS_POOL_TAG_ORIENTATION,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pThresholds);

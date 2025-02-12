@@ -1,6 +1,16 @@
-
-// Only need EC commands to use EC_CMD_MOTION_SENSE_CMD to determine which accel sensors there are and which position they are
-// ALl the rest can be done using memory map reads
+// Copyright (C) Framework Computer Inc, All Rights Reserved.
+//
+// Abstract:
+//
+//  This module contains the implementation of communication with the embedded controller.
+//
+//  Only need EC commands to use EC_CMD_MOTION_SENSE_CMD to determine which
+//  accel sensors there are and which position they are. ALl the rest can be
+//  done using memory map reads.
+//
+// Environment:
+//
+//  Windows User-Mode Driver Framework (UMDF)
 
 #include "Clients.h"
 #include "EcCommunication.h"

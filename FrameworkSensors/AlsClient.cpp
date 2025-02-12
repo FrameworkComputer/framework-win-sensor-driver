@@ -13,7 +13,7 @@
 
 #include "AlsClient.tmh"
 
-#define SENSORV2_POOL_TAG_AMBIENT_LIGHT           '2LmA'
+#define FWK_SENSORS_POOL_TAG_AMBIENT_LIGHT        'SLAF'
 
 #define Als_Initial_MinDataInterval_Ms            (10)          // 100Hz
 #define Als_Initial_Lux_Threshold_Pct             (1.0f)        // Percent threshold: 100%
@@ -29,9 +29,9 @@
 #define AlsDevice_Resolution_Lux                  (AlsDevice_Range_Lux / AlsDevice_Precision)
 
 // Ambient Light Sensor Unique ID
-// {2D2A4524-51E3-4E68-9B0F-5CAEDFB12C02}
+// {506AC61B-C762-499E-A848-685FC45DF39F}
 DEFINE_GUID(GUID_AlsDevice_UniqueID,
-    0x2d2a4524, 0x51e3, 0x4e68, 0x9b, 0xf, 0x5c, 0xae, 0xdf, 0xb1, 0x2c, 0x2);
+    0x506ac61b, 0xc762, 0x499e, 0xa8, 0x48, 0x68, 0x5f, 0xc4, 0x5d, 0xf3, 0x9f);
 
 // Sensor data
 typedef enum
@@ -148,7 +148,7 @@ AlsDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_AMBIENT_LIGHT,
+                                 FWK_SENSORS_POOL_TAG_AMBIENT_LIGHT,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pEnumerationProperties);
@@ -208,7 +208,7 @@ AlsDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_AMBIENT_LIGHT,
+                                 FWK_SENSORS_POOL_TAG_AMBIENT_LIGHT,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pSupportedDataFields);
@@ -243,7 +243,7 @@ AlsDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_AMBIENT_LIGHT,
+                                 FWK_SENSORS_POOL_TAG_AMBIENT_LIGHT,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pData);
@@ -305,7 +305,7 @@ AlsDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_AMBIENT_LIGHT,
+                                 FWK_SENSORS_POOL_TAG_AMBIENT_LIGHT,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pProperties);
@@ -373,7 +373,7 @@ AlsDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_AMBIENT_LIGHT,
+                                 FWK_SENSORS_POOL_TAG_AMBIENT_LIGHT,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pDataFieldProperties);
@@ -412,7 +412,7 @@ AlsDevice::Initialize(
         MemoryAttributes.ParentObject = SensorInstance;
         Status = WdfMemoryCreate(&MemoryAttributes,
                                  PagedPool,
-                                 SENSORV2_POOL_TAG_AMBIENT_LIGHT,
+                                 FWK_SENSORS_POOL_TAG_AMBIENT_LIGHT,
                                  Size,
                                  &MemoryHandle,
                                  (PVOID*)&m_pThresholds);

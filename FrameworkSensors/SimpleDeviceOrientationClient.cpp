@@ -30,7 +30,6 @@ typedef enum
 {
     LINEAR_ACCELEROMETER_DATA_X = 0,
     LINEAR_ACCELEROMETER_DATA_TIMESTAMP,
-    LINEAR_ACCELEROMETER_DATA_SHAKE,
     LINEAR_ACCELEROMETER_DATA_COUNT
 } LINEAR_ACCELEROMETER_DATA_INDEX;
 
@@ -174,7 +173,6 @@ SimpleDeviceOrientationDevice::Initialize(
 
         m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP] = PKEY_SensorData_Timestamp;
         m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_X] = PKEY_SensorData_AccelerationX_Gs;
-        m_pSupportedDataFields->List[LINEAR_ACCELEROMETER_DATA_SHAKE] = PKEY_SensorData_Shake;
     }
 
     //
@@ -211,14 +209,9 @@ SimpleDeviceOrientationDevice::Initialize(
     m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Key = PKEY_SensorData_AccelerationX_Gs;
     InitPropVariantFromFloat(0.0, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
 
-    m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Key = PKEY_SensorData_Shake;
-    InitPropVariantFromBoolean(FALSE, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
-
     m_CachedData.X = 0.0f;
-    m_CachedData.Shake = FALSE;
 
     m_LastSample.X  = 0.0f;
-    m_LastSample.Shake = FALSE;
     }
 
     //
@@ -312,7 +305,7 @@ SimpleDeviceOrientationDevice::Initialize(
         WDF_OBJECT_ATTRIBUTES MemoryAttributes;
         WDFMEMORY MemoryHandle = NULL;
 
-        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT - 2);    //  Timestamp and shake do not have thresholds
+        ULONG Size = SENSOR_COLLECTION_LIST_SIZE(LINEAR_ACCELEROMETER_DATA_COUNT - 2);    //  Timestamp does not have thresholds
 
         MemoryHandle = NULL;
         WDF_OBJECT_ATTRIBUTES_INIT(&MemoryAttributes);
@@ -403,12 +396,8 @@ SimpleDeviceOrientationDevice::GetData(
         // update last sample
         m_LastSample.X = m_CachedData.X;
 
-        m_LastSample.Shake = m_CachedData.Shake;
-
         // push to clx
         InitPropVariantFromFloat(m_LastSample.X, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_X].Value));
-
-        InitPropVariantFromBoolean(m_LastSample.Shake, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_SHAKE].Value));
 
         GetSystemTimePreciseAsFileTime(&TimeStamp);
         InitPropVariantFromFileTime(&TimeStamp, &(m_pData->List[LINEAR_ACCELEROMETER_DATA_TIMESTAMP].Value));

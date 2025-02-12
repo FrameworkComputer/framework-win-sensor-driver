@@ -76,6 +76,6 @@ UmdfExtensions           = SensorsCx0102
 ;Localizable Strings
 MediaDescription           = "Framework Computer Sensor Driver"
 PROVIDER                   = "Framework Computer Inc"
-FrameworkSensors_DevDesc = "Sensor Driver - ALS, Accelerometer, Orientation"
+FrameworkSensors_DevDesc   = "Framework Sensors"
 
 ;Non-Localizable Strings

@@ -242,7 +242,6 @@ private:
     typedef struct _SimpleDeviceOrientationSample
     {
         FLOAT    X;
-        BOOL    Shake;
     } SimpleDeviceOrientationSample, *PSimpleDeviceOrientationSample;
 
     SimpleDeviceOrientationSample                       m_CachedThresholds;

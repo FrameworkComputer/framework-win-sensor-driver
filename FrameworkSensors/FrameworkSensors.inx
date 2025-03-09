@@ -16,7 +16,7 @@ Class       = Sensor
 ClassGuid   = {5175D334-C371-4806-B3BA-71FD53C9258D}
 Provider    = %PROVIDER%
 CatalogFile = FrameworkSensors.cat
-DriverVer   = 8/29/2014,2.00.00.03
+DriverVer   = 2/19/2025,0.0.0.6
 PnpLockdown = 1
 
 [SourceDisksNames]

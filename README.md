@@ -1,21 +1,21 @@
-# framework-win-sensor-driver
-Sensor Driver for Windows on Framework systems
+# Framework Sensor Driver
+
+Sensor Driver for Windows on Framework Computer systems
 
 ```
 # Build
-msbuild .\SensorsComboDriver\SensorsComboDriver.sln /property:Platform=x64 /property:Configuration=Debug
+msbuild .\FrameworkSensors\FrameworkSensors.sln /property:Platform=x64 /property:Configuration=Debug
 
 # Distributing
-.\SensorsComboDriver\x64\Debug\
-    SensorsComboDriver.pdb
-    SensorsComboDriver\sensorscombodriver.cat
-    SensorsComboDriver\sensorscombodriver.dll
-    SensorsComboDriver\sensorscombodriver.inf
+.\FrameworkSensors\x64\Debug\
+    FrameworkSensors.pdb
+    FrameworkSensors\FrameworkSensors.cat
+    FrameworkSensors\FrameworkSensors.dll
+    FrameworkSensors\FrameworkSensors.inf
 # Use signtool to sign .cat file and package all 4 files
 
 # Install
-> sudo pnputil /add-driver SensorsComboDriver.inf /install
-
+> sudo pnputil /add-driver FrameworkSensors.inf /install
 ```
 
 Check if the driver is installed and loaded:
@@ -38,7 +38,7 @@ Driver Name:                oem2.inf
 Microsoft PnP Utility
 
 Instance ID:                ACPI\FRMWC006\1
-Device Description:         Sensor Driver - ALS, Accelerometer, Orientation
+Device Description:         Framework Computer Sensor Driver
 Class Name:                 Sensor
 Class GUID:                 {5175d334-c371-4806-b3ba-71fd53c9258d}
 Manufacturer Name:          Framework Computer Inc

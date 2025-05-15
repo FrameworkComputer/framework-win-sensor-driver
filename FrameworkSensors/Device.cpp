@@ -84,38 +84,6 @@ void AllocateDeviceAtIndex(
     }
 }
 
-NTSTATUS ConnectToEc(
-	_In_ WDFDEVICE FxDevice,
-    _Inout_ HANDLE *Handle
-) {
-    SENSOR_FunctionEnter();
-    NTSTATUS Status = STATUS_SUCCESS;
-
-    UNREFERENCED_PARAMETER(FxDevice);
-
-    *Handle = CreateFileW(
-        LR"(\\.\GLOBALROOT\Device\CrosEC)",
-        GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_FLAG_OVERLAPPED,
-        NULL);
-
-    if (*Handle == INVALID_HANDLE_VALUE) {
-        Status = STATUS_INVALID_HANDLE;
-        TraceError("COMBO %!FUNC! CreateFileW failed %!STATUS!", Status);
-        goto Exit;
-    }
-
-Exit:
-    SENSOR_FunctionExit(Status);
-
-	return Status;
-}
-
-
-
 //------------------------------------------------------------------------------
 //
 // Function: OnDeviceAdd
@@ -258,7 +226,7 @@ OnPrepareHardware(
 
     SENSOR_FunctionEnter();
 
-    Status = ConnectToEc(Device, &Handle);
+    Status = ConnectToEc(&Handle);
     if (!NT_SUCCESS(Status)) {
         TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
         goto Exit;

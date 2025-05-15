@@ -403,6 +403,12 @@ OnReleaseHardware(
             pDevice->m_Lock = NULL;
         }
 
+        // Close handle to EC driver
+        if (pDevice->m_CrosEcHandle && pDevice->m_CrosEcHandle != INVALID_HANDLE_VALUE) {
+            CloseHandle(pDevice->m_CrosEcHandle);
+            pDevice->m_CrosEcHandle = INVALID_HANDLE_VALUE;
+        }
+
         // Delete sensor instance
         if (NULL != pDevice->m_SensorInstance)
         {

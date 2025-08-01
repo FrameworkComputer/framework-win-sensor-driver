@@ -38,6 +38,35 @@ typedef enum
     ACCELEROMETER_DATA_COUNT
 } ACCELEROMETER_DATA_INDEX;
 
+UINT8 CrosEcGetMotionSensorCount(HANDLE Handle)
+{
+    EC_REQUEST_MOTION_SENSE_DUMP req{};
+    EC_RESPONSE_MOTION_SENSE_DUMP res{};
+
+    if (Handle == INVALID_HANDLE_VALUE) {
+        TraceError("%!FUNC! Handle is invalid");
+        return 0;
+    }
+
+    req.Cmd = 0;
+    req.MaxSensorCount = 0;
+    if (0 == CrosEcSendCommand(
+        Handle,
+        EC_CMD_MOTION_SENSE,
+        1,
+        &req,
+        sizeof(req),
+        &res,
+        sizeof(res)
+    )) {
+        TraceError("%!FUNC! EC_CMD_MOTION_SENSE_DUMP failed");
+        return 0;
+    }
+
+    return res.SensorCount;
+}
+
+
 //------------------------------------------------------------------------------
 // Function: Initialize
 //
@@ -57,6 +86,8 @@ AccelerometerDevice::Initialize(
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
+    UINT8 SensorCount = 0;
+    PComboDevice Context = GetContextFromSensorInstance(SensorInstance);
 
     SENSOR_FunctionEnter();
 
@@ -66,6 +97,15 @@ AccelerometerDevice::Initialize(
     m_Device = Device;
     m_SensorInstance = SensorInstance;
     m_Started = FALSE;
+
+    SensorCount = CrosEcGetMotionSensorCount(Context->m_CrosEcHandle);
+    TraceInformation("%!FUNC! Found %d Sensors on this device", SensorCount);
+    if (SensorCount == 0)
+    {
+        TraceError("%!FUNC! No Sensors available. Not initializing AccelerometerClient");
+        Status = STATUS_NOT_FOUND;
+        goto Exit;
+    }
 
     //
     // Create Lock

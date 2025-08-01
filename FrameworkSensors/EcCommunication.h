@@ -49,6 +49,7 @@ NTSTATUS ConnectToEc(
 	_Inout_ HANDLE* Handle
 );
 
+#define EC_CMD_MOTION_SENSE     0x002B
 #define EC_CMD_RGBKBD_SET_COLOR 0x013A
 #define EC_CMD_RGBKBD           0x013B
 
@@ -92,6 +93,21 @@ typedef struct {
 	UINT8 Length;
 	Rgb Colors[CROS_EC_CMD_MAX_KEY_COUNT];
 } EC_REQUEST_RGB_KBD_SET_COLOR;
+
+typedef struct {
+	// Dump = 0
+	UINT8 Cmd;
+	UINT8 MaxSensorCount;
+} EC_REQUEST_MOTION_SENSE_DUMP;
+
+typedef struct {
+	UINT8 MaxSensorCount;
+	UINT8 SensorCount;
+	// Need to allocate extra data if you care about this field.
+	// Right now I only care about the count.
+	// If this field is not there, the EC just truncates the response.
+	// UINT8 Sensors[];
+} EC_RESPONSE_MOTION_SENSE_DUMP;
 
 #include <poppack.h>
 

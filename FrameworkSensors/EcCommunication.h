@@ -14,7 +14,7 @@ extern "C" {
 #include <handleapi.h>
 #include <windows.h>
 #include <wdf.h>
-#include "SensorsTrace.h"
+#include "Trace.h"
 
 /* Command version mask */
 #define EC_VER_MASK(version) (1UL << (version))

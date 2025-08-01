@@ -84,7 +84,7 @@
       <WppEnabled>true</WppEnabled>
       <WppDllMacro>true</WppDllMacro>
       <WppModuleName>FrameworkSensors</WppModuleName>
-      <WppScanConfigurationData>sensorstrace.h</WppScanConfigurationData>
+      <WppScanConfigurationData>Trace.h</WppScanConfigurationData>
     </ClCompile>
     <Inf Include="FrameworkSensors.inx">
       <Architecture>$(InfArch)</Architecture>

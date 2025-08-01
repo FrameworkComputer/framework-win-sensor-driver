@@ -16,7 +16,7 @@
 #include <cmath>
 #include <timeapi.h>
 
-#include "SensorsTrace.h"
+#include "Trace.h"
 #include <SensorsCx.h>
 #include <SensorsUtils.h>
 

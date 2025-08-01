@@ -109,6 +109,28 @@ typedef struct {
 	// UINT8 Sensors[];
 } EC_RESPONSE_MOTION_SENSE_DUMP;
 
+typedef struct {
+	// Info = 1
+	UINT8 Cmd;
+	UINT8 SensorNum;
+} EC_REQUEST_MOTION_SENSE_INFO;
+
+#define MOTION_SENSE_TYPE_ACCEL   0x00
+#define MOTION_SENSE_TYPE_GYRO    0x01
+#define MOTION_SENSE_TYPE_MAG     0x02
+#define MOTION_SENSE_TYPE_PROX    0x03
+#define MOTION_SENSE_TYPE_LIGHT   0x04
+
+#define MOTION_SENSE_LOCATION_BASE   0x00
+#define MOTION_SENSE_LOCATION_LID    0x01
+#define MOTION_SENSE_LOCATION_CAMERA 0x02
+
+typedef struct {
+	UINT8 SensorType;
+	UINT8 Location;
+	UINT8 Chip;
+} EC_RESPONSE_MOTION_SENSE_INFO;
+
 #include <poppack.h>
 
 int CrosEcSendCommand(

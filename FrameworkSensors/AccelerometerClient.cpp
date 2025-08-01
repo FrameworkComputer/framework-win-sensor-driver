@@ -66,6 +66,73 @@ UINT8 CrosEcGetMotionSensorCount(HANDLE Handle)
     return res.SensorCount;
 }
 
+// Returns STATUS_NOT_FOUND if either base or lid accelerometer sensors are not found.
+NTSTATUS
+CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor)
+{
+    EC_REQUEST_MOTION_SENSE_INFO req{};
+    EC_RESPONSE_MOTION_SENSE_INFO res{};
+    BOOLEAN FoundBase = FALSE;
+    BOOLEAN FoundLid = FALSE;
+    UINT8 SensorCount = 0;
+
+    if (Handle == INVALID_HANDLE_VALUE) {
+        TraceError("%!FUNC! Handle is invalid");
+        return STATUS_INVALID_HANDLE;
+    }
+
+    if (BaseSensor == nullptr || LidSensor == nullptr)
+    {
+        TraceError("%!FUNC! Invalid BaseSensor or LidSensor pointer");
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    SensorCount = CrosEcGetMotionSensorCount(Handle);
+
+    for (UINT8 i = 0; i < SensorCount; i++)
+    {
+        req.Cmd = 1;
+        req.SensorNum = i;
+        if (0 == CrosEcSendCommand(
+            Handle,
+            EC_CMD_MOTION_SENSE,
+            1,
+            &req,
+            sizeof(req),
+            &res,
+            sizeof(res)
+        )) {
+            TraceError("%!FUNC! EC_CMD_MOTION_SENSE_INFO failed for sensor %d", i);
+            continue;
+        }
+        if (res.SensorType != MOTION_SENSE_TYPE_ACCEL) {
+            TraceError("%!FUNC! Found sensor of type %d. Not Accelerometer - ignoring.", res.SensorType);
+            continue;
+        }
+
+        switch (res.Location) {
+        case MOTION_SENSE_LOCATION_BASE:
+            TraceInformation("%!FUNC! Found base accel sensor at index: %d", i);
+            FoundBase = TRUE;
+            *BaseSensor = i;
+            break;
+        case MOTION_SENSE_LOCATION_LID:
+            TraceInformation("%!FUNC! Found lid accel sensor at index: %d", i);
+            FoundLid = TRUE;
+            *LidSensor = i;
+            break;
+        }
+    }
+
+    if (!FoundBase || !FoundLid)
+    {
+        TraceError("%!FUNC! Base or Lid accelerometer sensor not found");
+        return STATUS_NOT_FOUND;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 
 //------------------------------------------------------------------------------
 // Function: Initialize
@@ -97,6 +164,9 @@ AccelerometerDevice::Initialize(
     m_Device = Device;
     m_SensorInstance = SensorInstance;
     m_Started = FALSE;
+    // Sensible defaults - applies to most devices
+    m_LidSensorIndex = 0;
+    m_LidBaseSensor = 1;
 
     SensorCount = CrosEcGetMotionSensorCount(Context->m_CrosEcHandle);
     TraceInformation("%!FUNC! Found %d Sensors on this device", SensorCount);
@@ -104,6 +174,13 @@ AccelerometerDevice::Initialize(
     {
         TraceError("%!FUNC! No Sensors available. Not initializing AccelerometerClient");
         Status = STATUS_NOT_FOUND;
+        goto Exit;
+    }
+
+    Status = CrosEcGetAccelIndeces(Context->m_CrosEcHandle, &m_LidSensorIndex, &m_LidBaseSensor);
+    if (!NT_SUCCESS(Status))
+    {
+        TraceError("%!FUNC! Failed to get accelerometer indeces: %!STATUS!", Status);
         goto Exit;
     }
 
@@ -451,13 +528,17 @@ AccelerometerDevice::GetData(
     UINT16 lid_angle = lid_angle_bytes[0] + (lid_angle_bytes[1] << 8);
     TraceInformation("Lid Angle Status: %dDeg%s", lid_angle, lid_angle == 500 ?  "(Unreliable)" : "");
 
+    // Lid accelerometer is relevant for screen rotation
+    // Base accelerometer is not used in this driver
+    // It's only used for lid angle in the EC firmware
+    UINT SensorOffset = 6 * m_LidSensorIndex + EC_MEMMAP_ACC_DATA + 2;
     UINT16 Sensor1[6] = {0};
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 2, (UINT8*)&Sensor1[0]);
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 3, (UINT8*)&Sensor1[1]);
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 4, (UINT8*)&Sensor1[2]);
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 5, (UINT8*)&Sensor1[3]);
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 6, (UINT8*)&Sensor1[4]);
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 7, (UINT8*)&Sensor1[5]);
+    CrosEcReadMemU8(Handle, SensorOffset, (UINT8*)&Sensor1[0]);
+    CrosEcReadMemU8(Handle, SensorOffset + 1, (UINT8*)&Sensor1[1]);
+    CrosEcReadMemU8(Handle, SensorOffset + 2, (UINT8*)&Sensor1[2]);
+    CrosEcReadMemU8(Handle, SensorOffset + 3, (UINT8*)&Sensor1[3]);
+    CrosEcReadMemU8(Handle, SensorOffset + 4, (UINT8*)&Sensor1[4]);
+    CrosEcReadMemU8(Handle, SensorOffset + 5, (UINT8*)&Sensor1[5]);
     m_CachedData.Axis.X = (float) (Sensor1[0] + (Sensor1[1] << 8));
     m_CachedData.Axis.Y = (float) (Sensor1[2] + (Sensor1[3] << 8));
     m_CachedData.Axis.Z = (float) (Sensor1[4] + (Sensor1[5] << 8));

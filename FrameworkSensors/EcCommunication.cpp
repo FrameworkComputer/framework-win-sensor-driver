@@ -21,12 +21,15 @@
 NTSTATUS ConnectToEc(
     _Inout_ HANDLE* Handle
 ) {
-    NTSTATUS Status = STATUS_SUCCESS;
+    if (Handle == NULL) {
+        TraceError("%!FUNC! Handle pointer is NULL");
+        return STATUS_INVALID_PARAMETER;
+    }
 
     if (*Handle != INVALID_HANDLE_VALUE) {
         // Already connected
         TraceError("%!FUNC! Already connected");
-        return Status;
+        return STATUS_SUCCESS;
     }
 
     *Handle = CreateFileW(
@@ -44,7 +47,7 @@ NTSTATUS ConnectToEc(
     }
 
     TraceInformation("%!FUNC! Got Handle");
-    return Status;
+    return STATUS_SUCCESS;
 }
 
 int CrosEcSendCommand(

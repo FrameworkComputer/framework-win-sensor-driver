@@ -25,3 +25,22 @@ jobs:
         env:
           Configuration: ${{ matrix.configuration }}
           Platform: ${{ matrix.platform }}
+
+      # Can EV sign (have to replace existing signatures)
+      # java -jar ~/Downloads/jsign-7.1.jar --replace --storetype PIV --storepass ****** --tsaurl http://ts.ssl.com --tsmode RFC3161 \
+      #   FrameworkSensors.dll
+      # java -jar ~/Downloads/jsign-7.1.jar --replace --storetype PIV --storepass ****** --tsaurl http://ts.ssl.com --tsmode RFC3161 \
+      #   FrameworkSensors.cat
+      - name: Create bundle
+        run: |
+          mkdir bundle
+          cp FrameworkSensors\x64\${{ matrix.configuration }}\FrameworkSensors\FrameworkSensors.cat bundle\
+          cp FrameworkSensors\x64\${{ matrix.configuration }}\FrameworkSensors\FrameworkSensors.dll bundle\
+          cp FrameworkSensors\x64\${{ matrix.configuration }}\FrameworkSensors\FrameworkSensors.inf bundle\
+          cp FrameworkSensors\x64\${{ matrix.configuration }}\FrameworkSensors.pdb bundle\
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework_win_sensors_${{ matrix.configuration }}
+          path: bundle

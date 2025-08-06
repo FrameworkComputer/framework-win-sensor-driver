@@ -222,7 +222,7 @@ private:
     AccelerometerSample                       m_CachedData;
     AccelerometerSample                       m_LastSample;
     UINT8                                     m_LidSensorIndex;
-    UINT8                                     m_LidBaseSensor;
+    UINT8                                     m_BaseSensor;
 
 public:
 

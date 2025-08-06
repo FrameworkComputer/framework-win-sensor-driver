@@ -73,7 +73,7 @@ NTSTATUS CrosEcGetMotionSensorCount(HANDLE Handle, UINT8 *Count)
 
 // Returns STATUS_NOT_FOUND if either base or lid accelerometer sensors are not found.
 NTSTATUS
-CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor, UINT8 SensorCount)
+CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *LidSensor, UINT8 *BaseSensor, UINT8 SensorCount)
 {
     EC_REQUEST_MOTION_SENSE_INFO req{};
     EC_RESPONSE_MOTION_SENSE_INFO res{};
@@ -169,7 +169,7 @@ AccelerometerDevice::Initialize(
     SensorCount = 0;
     // Sensible defaults - applies to most devices
     m_LidSensorIndex = 0;
-    m_LidBaseSensor = 1;
+    m_BaseSensor = 1;
     Context->m_CrosEcHandle = INVALID_HANDLE_VALUE;
 
     // Make sure we have a handle to the EC driver
@@ -189,7 +189,7 @@ AccelerometerDevice::Initialize(
             goto Exit;
         }
 
-        Status = CrosEcGetAccelIndeces(Context->m_CrosEcHandle, &m_LidSensorIndex, &m_LidBaseSensor, SensorCount);
+        Status = CrosEcGetAccelIndeces(Context->m_CrosEcHandle, &m_LidSensorIndex, &m_BaseSensor, SensorCount);
         if (!NT_SUCCESS(Status))
         {
             TraceError("%!FUNC! Failed to get accelerometer indeces: %!STATUS!", Status);

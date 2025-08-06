@@ -33,7 +33,7 @@ NTSTATUS ConnectToEc(
         NULL);
 
     if (*Handle == INVALID_HANDLE_VALUE) {
-        TraceError("%!FUNC! CreateFileW failed %!STATUS!", Status);
+        TraceError("%!FUNC! CreateFileW failed");
         return STATUS_INVALID_HANDLE;
     }
 

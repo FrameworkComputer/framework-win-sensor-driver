@@ -23,6 +23,12 @@ NTSTATUS ConnectToEc(
 ) {
     NTSTATUS Status = STATUS_SUCCESS;
 
+    if (*Handle != INVALID_HANDLE_VALUE) {
+        // Already connected
+        TraceError("%!FUNC! Already connected");
+        return Status;
+    }
+
     *Handle = CreateFileW(
         LR"(\\.\GLOBALROOT\Device\CrosEC)",
         GENERIC_READ | GENERIC_WRITE,
@@ -37,6 +43,7 @@ NTSTATUS ConnectToEc(
         return STATUS_INVALID_HANDLE;
     }
 
+    TraceInformation("%!FUNC! Got Handle");
     return Status;
 }
 

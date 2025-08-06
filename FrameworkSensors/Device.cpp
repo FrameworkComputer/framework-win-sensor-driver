@@ -219,42 +219,8 @@ OnPrepareHardware(
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    ULONG  i;
-    HANDLE Handle;
-    DWORD retb{};
-    CROSEC_READMEM rm{};
 
     SENSOR_FunctionEnter();
-
-    Status = ConnectToEc(&Handle);
-    if (!NT_SUCCESS(Status)) {
-        TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
-        goto Exit;
-    }
-
-    rm.bytes = 0xfe;
-    rm.offset = 0;
-    Status = DeviceIoControl(Handle,
-        (DWORD) IOCTL_CROSEC_RDMEM,
-        &rm,
-        sizeof(rm),
-        &rm,
-        sizeof(rm),
-        &retb,
-        nullptr);
-    if (!NT_SUCCESS(Status)) {
-        TraceError("COMBO %!FUNC! ConnectToEc failed %!STATUS!", Status);
-        goto Exit;
-    }
-
-    UINT8 *EcMem = rm.buffer;
-    for (i = 0; i < 0xfe-16; i+=16) {
-        TraceInformation(
-            "%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
-            EcMem[i], EcMem[i+1], EcMem[i+2], EcMem[i+3], EcMem[i+4], EcMem[i + 5], EcMem[i + 6], EcMem[i + 7],
-            EcMem[i + 8], EcMem[i+9], EcMem[i+10], EcMem[i+11], EcMem[i+12], EcMem[i + 13], EcMem[i + 14], EcMem[i + 15]
-        );
-    }
 
     for (ULONG Count = 0; Count < SensorInstanceCount; Count++)
     {
@@ -285,7 +251,7 @@ OnPrepareHardware(
 
         AllocateDeviceAtIndex(Count, &pDevice);
 
-        pDevice->m_CrosEcHandle = Handle;
+        pDevice->m_CrosEcHandle = INVALID_HANDLE_VALUE;
 
         // Fill out properties
         Status = pDevice->Initialize(Device, SensorInstance);

@@ -38,14 +38,18 @@ typedef enum
     ACCELEROMETER_DATA_COUNT
 } ACCELEROMETER_DATA_INDEX;
 
-UINT8 CrosEcGetMotionSensorCount(HANDLE Handle)
+NTSTATUS CrosEcGetMotionSensorCount(HANDLE Handle, UINT8 *Count)
 {
     EC_REQUEST_MOTION_SENSE_DUMP req{};
     EC_RESPONSE_MOTION_SENSE_DUMP res{};
 
     if (Handle == INVALID_HANDLE_VALUE) {
         TraceError("%!FUNC! Handle is invalid");
-        return 0;
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (Count == nullptr) {
+        TraceError("%!FUNC! Count==NULL");
+        return STATUS_INVALID_PARAMETER;
     }
 
     req.Cmd = 0;
@@ -60,21 +64,21 @@ UINT8 CrosEcGetMotionSensorCount(HANDLE Handle)
         sizeof(res)
     )) {
         TraceError("%!FUNC! EC_CMD_MOTION_SENSE_DUMP failed");
-        return 0;
+        return STATUS_NOT_FOUND;
     }
 
-    return res.SensorCount;
+    *Count = res.SensorCount;
+    return STATUS_SUCCESS;
 }
 
 // Returns STATUS_NOT_FOUND if either base or lid accelerometer sensors are not found.
 NTSTATUS
-CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor)
+CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor, UINT8 SensorCount)
 {
     EC_REQUEST_MOTION_SENSE_INFO req{};
     EC_RESPONSE_MOTION_SENSE_INFO res{};
     BOOLEAN FoundBase = FALSE;
     BOOLEAN FoundLid = FALSE;
-    UINT8 SensorCount = 0;
 
     if (Handle == INVALID_HANDLE_VALUE) {
         TraceError("%!FUNC! Handle is invalid");
@@ -86,8 +90,6 @@ CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor)
         TraceError("%!FUNC! Invalid BaseSensor or LidSensor pointer");
         return STATUS_INVALID_PARAMETER;
     }
-
-    SensorCount = CrosEcGetMotionSensorCount(Handle);
 
     for (UINT8 i = 0; i < SensorCount; i++)
     {
@@ -164,24 +166,36 @@ AccelerometerDevice::Initialize(
     m_Device = Device;
     m_SensorInstance = SensorInstance;
     m_Started = FALSE;
+    SensorCount = 0;
     // Sensible defaults - applies to most devices
     m_LidSensorIndex = 0;
     m_LidBaseSensor = 1;
+    Context->m_CrosEcHandle = INVALID_HANDLE_VALUE;
 
-    SensorCount = CrosEcGetMotionSensorCount(Context->m_CrosEcHandle);
+    // Make sure we have a handle to the EC driver
+    ConnectToEc(&Context->m_CrosEcHandle);
+
+    Status = CrosEcGetMotionSensorCount(Context->m_CrosEcHandle, &SensorCount);
     TraceInformation("%!FUNC! Found %d Sensors on this device", SensorCount);
-    if (SensorCount == 0)
+    // If the EC is present, we evaluate the responses,
+    // If not just ignore it and try again later.
+    // Want to avoid failing the driver load if the EC is not present.
+    if (NT_SUCCESS(Status))
     {
-        TraceError("%!FUNC! No Sensors available. Not initializing AccelerometerClient");
-        Status = STATUS_NOT_FOUND;
-        goto Exit;
-    }
+        if (SensorCount == 0)
+        {
+            TraceError("%!FUNC! No Sensors available. Not initializing AccelerometerClient");
+            Status = STATUS_NOT_FOUND;
+            goto Exit;
+        }
 
-    Status = CrosEcGetAccelIndeces(Context->m_CrosEcHandle, &m_LidSensorIndex, &m_LidBaseSensor);
-    if (!NT_SUCCESS(Status))
-    {
-        TraceError("%!FUNC! Failed to get accelerometer indeces: %!STATUS!", Status);
-        goto Exit;
+        Status = CrosEcGetAccelIndeces(Context->m_CrosEcHandle, &m_LidSensorIndex, &m_LidBaseSensor, SensorCount);
+        if (!NT_SUCCESS(Status))
+        {
+            TraceError("%!FUNC! Failed to get accelerometer indeces: %!STATUS!", Status);
+            Status = STATUS_NOT_FOUND;
+            goto Exit;
+        }
     }
 
     //
@@ -514,6 +528,13 @@ AccelerometerDevice::GetData(
     NTSTATUS Status = STATUS_SUCCESS;
 
     SENSOR_FunctionEnter();
+
+    if (Handle == INVALID_HANDLE_VALUE) {
+        TraceError("%!FUNC! Handle is invalid");
+        return STATUS_INVALID_HANDLE;
+    }
+
+    // TODO: Might want to check if sensor indeces are initialized
 
     UINT8 acc_status = 0;
     CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);

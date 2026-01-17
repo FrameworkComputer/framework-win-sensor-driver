@@ -170,6 +170,7 @@ AccelerometerDevice::Initialize(
     // Sensible defaults - applies to most devices
     m_LidSensorIndex = 0;
     m_BaseSensor = 1;
+    m_SensorIndicesInitialized = FALSE;
     Context->m_CrosEcHandle = INVALID_HANDLE_VALUE;
 
     // Make sure we have a handle to the EC driver
@@ -196,6 +197,7 @@ AccelerometerDevice::Initialize(
             Status = STATUS_NOT_FOUND;
             goto Exit;
         }
+        m_SensorIndicesInitialized = TRUE;
     }
 
     //
@@ -534,7 +536,24 @@ AccelerometerDevice::GetData(
         return STATUS_INVALID_HANDLE;
     }
 
-    // TODO: Might want to check if sensor indeces are initialized
+    // Initialize sensor indices if not done during Initialize() (EC wasn't available then)
+    if (!m_SensorIndicesInitialized) {
+        UINT8 SensorCount = 0;
+        Status = CrosEcGetMotionSensorCount(Handle, &SensorCount);
+        if (NT_SUCCESS(Status) && SensorCount > 0) {
+            Status = CrosEcGetAccelIndeces(Handle, &m_LidSensorIndex, &m_BaseSensor, SensorCount);
+            if (NT_SUCCESS(Status)) {
+                m_SensorIndicesInitialized = TRUE;
+                TraceInformation("%!FUNC! Late-initialized sensor indices: Lid=%d, Base=%d", m_LidSensorIndex, m_BaseSensor);
+            } else {
+                TraceError("%!FUNC! Failed to get accelerometer indices: %!STATUS!", Status);
+                return Status;
+            }
+        } else {
+            TraceError("%!FUNC! Failed to get sensor count or no sensors available");
+            return STATUS_DEVICE_NOT_READY;
+        }
+    }
 
     UINT8 acc_status = 0;
     CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);

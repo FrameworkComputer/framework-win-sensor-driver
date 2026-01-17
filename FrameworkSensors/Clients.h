@@ -223,6 +223,7 @@ private:
     AccelerometerSample                       m_LastSample;
     UINT8                                     m_LidSensorIndex;
     UINT8                                     m_BaseSensor;
+    BOOLEAN                                   m_SensorIndicesInitialized;
 
 public:
 

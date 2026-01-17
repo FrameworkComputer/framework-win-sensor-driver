@@ -479,6 +479,13 @@ OnD0Exit(
             goto Exit;
         }
 
+        // Close EC handle before sleep to avoid stale handles after wake.
+        // The handle will be re-acquired in OnTimerExpire when the device wakes.
+        if (pDevice->m_CrosEcHandle != INVALID_HANDLE_VALUE) {
+            CloseHandle(pDevice->m_CrosEcHandle);
+            pDevice->m_CrosEcHandle = INVALID_HANDLE_VALUE;
+        }
+
         pDevice->m_PoweredOn = FALSE;
         InitPropVariantFromUInt32(SensorState_Idle,
                                   &(pDevice->m_pProperties->List[SENSOR_COMMON_PROPERTY_STATE].Value));

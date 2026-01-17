@@ -60,12 +60,10 @@ int CrosEcSendCommand(
     unsigned int inlen
 )
 {
-    NTSTATUS Status = STATUS_SUCCESS;
     DWORD retb{};
     CROSEC_COMMAND cmd{};
 
     if (Handle == INVALID_HANDLE_VALUE) {
-        Status = STATUS_INVALID_HANDLE;
         TraceError("%!FUNC! Invalid Handle");
         return 0;
     }
@@ -91,16 +89,16 @@ int CrosEcSendCommand(
 
     RtlCopyMemory(cmd.data, outdata, outlen);
 
-    Status = DeviceIoControl(Handle,
+    if (!DeviceIoControl(Handle,
         (DWORD) IOCTL_CROSEC_XCMD,
         &cmd,
         sizeof(cmd),
         &cmd,
         sizeof(cmd),
         &retb,
-        nullptr);
-    if (!NT_SUCCESS(Status)) {
-        TraceError("%!FUNC! ConnectToEc failed %!STATUS!", Status);
+        nullptr)) {
+        DWORD err = GetLastError();
+        TraceError("%!FUNC! DeviceIoControl XCMD failed, error=%d", err);
         return 0;
     }
 
@@ -123,28 +121,26 @@ int CrosEcSendCommand(
 
 int CrosEcReadMemU8(HANDLE Handle, unsigned int offset, UINT8* dest)
 {
-    NTSTATUS Status = STATUS_SUCCESS;
     DWORD retb{};
     CROSEC_READMEM rm{};
 
     if (Handle == INVALID_HANDLE_VALUE) {
-        Status = STATUS_INVALID_HANDLE;
         TraceError("%!FUNC! Invalid Handle");
         return 0;
     }
 
     rm.bytes = 0x01;
     rm.offset = offset;
-    Status = DeviceIoControl(Handle,
+    if (!DeviceIoControl(Handle,
         (DWORD) IOCTL_CROSEC_RDMEM,
         &rm,
         sizeof(rm),
         &rm,
         sizeof(rm),
         &retb,
-        nullptr);
-    if (!NT_SUCCESS(Status)) {
-        TraceError("%!FUNC! ConnectToEc failed %!STATUS!", Status);
+        nullptr)) {
+        DWORD err = GetLastError();
+        TraceError("%!FUNC! DeviceIoControl RDMEM failed, error=%d", err);
         return 0;
     }
 

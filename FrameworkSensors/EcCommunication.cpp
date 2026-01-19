@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MS-PL
+//
 // Copyright (C) Framework Computer Inc, All Rights Reserved.
 //
 // Abstract:

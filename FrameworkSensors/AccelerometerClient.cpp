@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MS-PL
+//
 // Copyright (C) Microsoft Corporation, All Rights Reserved.
 // Copyright (C) Framework Computer Inc, All Rights Reserved.
 //
@@ -52,7 +54,7 @@ UINT8 CrosEcGetMotionSensorCount(HANDLE Handle)
     req.MaxSensorCount = 0;
     if (0 == CrosEcSendCommand(
         Handle,
-        EC_CMD_MOTION_SENSE,
+        EC_CMD_MOTION_SENSE_CMD,
         1,
         &req,
         sizeof(req),
@@ -95,7 +97,7 @@ CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor)
         req.SensorNum = i;
         if (0 == CrosEcSendCommand(
             Handle,
-            EC_CMD_MOTION_SENSE,
+            EC_CMD_MOTION_SENSE_CMD,
             1,
             &req,
             sizeof(req),
@@ -105,18 +107,18 @@ CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor)
             TraceError("%!FUNC! EC_CMD_MOTION_SENSE_INFO failed for sensor %d", i);
             continue;
         }
-        if (res.SensorType != MOTION_SENSE_TYPE_ACCEL) {
+        if (res.SensorType != MOTIONSENSE_TYPE_ACCEL) {
             TraceError("%!FUNC! Found sensor of type %d. Not Accelerometer - ignoring.", res.SensorType);
             continue;
         }
 
         switch (res.Location) {
-        case MOTION_SENSE_LOCATION_BASE:
+        case MOTIONSENSE_LOC_BASE:
             TraceInformation("%!FUNC! Found base accel sensor at index: %d", i);
             FoundBase = TRUE;
             *BaseSensor = i;
             break;
-        case MOTION_SENSE_LOCATION_LID:
+        case MOTIONSENSE_LOC_LID:
             TraceInformation("%!FUNC! Found lid accel sensor at index: %d", i);
             FoundLid = TRUE;
             *LidSensor = i;

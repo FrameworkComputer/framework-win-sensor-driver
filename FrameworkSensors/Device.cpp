@@ -28,6 +28,7 @@
 
 typedef enum {
     SENSOR_KIND_ACCELEROMETER,
+    SENSOR_KIND_HINGEANGLE,
     SENSOR_KIND_ALS,
 } SensorKind;
 
@@ -60,6 +61,7 @@ void AllocateDeviceAtIndex(
     switch (SensorKinds[Index])
     {
         case SENSOR_KIND_ACCELEROMETER: *ppDevice = new(*ppDevice) AccelerometerDevice; break;
+        case SENSOR_KIND_HINGEANGLE:    *ppDevice = new(*ppDevice) HingeAngleDevice; break;
         case SENSOR_KIND_ALS:           *ppDevice = new(*ppDevice) AlsDevice; break;
         default: break;
     }
@@ -220,6 +222,11 @@ OnPrepareHardware(
                 TraceInformation("COMBO %!FUNC! Detected accelerometer (base=%d, lid=%d)", base, lid);
                 SensorSizes[SensorInstanceCount] = sizeof(AccelerometerDevice);
                 SensorKinds[SensorInstanceCount] = SENSOR_KIND_ACCELEROMETER;
+                SensorInstanceCount++;
+
+                TraceInformation("COMBO %!FUNC! Detected hinge angle (base+lid accels present)");
+                SensorSizes[SensorInstanceCount] = sizeof(HingeAngleDevice);
+                SensorKinds[SensorInstanceCount] = SENSOR_KIND_HINGEANGLE;
                 SensorInstanceCount++;
             }
         }

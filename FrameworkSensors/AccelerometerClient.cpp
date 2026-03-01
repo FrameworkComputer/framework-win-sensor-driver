@@ -517,34 +517,102 @@ AccelerometerDevice::GetData(
 
     SENSOR_FunctionEnter();
 
+    //
+    // Read sensor data safely using the EC busy bit and sample ID protocol.
+    // The EC sets the busy bit while updating sensor data and increments the
+    // sample ID (lower 4 bits of ACC_STATUS) after each update. We must:
+    //   1. Wait for the busy bit to clear
+    //   2. Record the sample ID
+    //   3. Read all sensor data
+    //   4. Re-read ACC_STATUS and verify the busy bit is still clear
+    //      and the sample ID hasn't changed
+    // This guarantees we didn't read partially-updated data.
+    //
     UINT8 acc_status = 0;
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);
-    TraceInformation("Status: (%02x), Present: %d, Busy: %d\n",
-        acc_status,
-        (acc_status & EC_MEMMAP_ACC_STATUS_PRESENCE_BIT) > 0,
-        (acc_status & EC_MEMMAP_ACC_STATUS_BUSY_BIT) > 0);
+    UINT8 samp_id = 0xFF;
+    UINT8 status = 0;
+    int attempts = 0;
+
+    #define quarter (0xFFFF/4)
+    #define MAX_SENSOR_READ_ATTEMPTS  5
+    #define MAX_BUSY_WAIT_ATTEMPTS   50
+    #define BUSY_WAIT_SLEEP_INTERVAL  5
+    #define BUSY_WAIT_SLEEP_MS       25
 
     UINT8 lid_angle_bytes[2] = {0};
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 0, &lid_angle_bytes[0]);
-    CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 1, &lid_angle_bytes[1]);
-    UINT16 lid_angle = lid_angle_bytes[0] + (lid_angle_bytes[1] << 8);
+    UINT16 lid_angle = 0;
+    UINT SensorOffset = 6 * m_LidSensorIndex + EC_MEMMAP_ACC_DATA + 2;
+    UINT8 Sensor1[6] = {0};
+
+    while ((status & (EC_MEMMAP_ACC_STATUS_BUSY_BIT |
+                      EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK)) != samp_id) {
+
+        if (attempts++ >= MAX_SENSOR_READ_ATTEMPTS) {
+            TraceError("%!FUNC! Failed to get consistent sensor data after %d attempts", attempts);
+            Status = STATUS_IO_DEVICE_ERROR;
+            goto Exit;
+        }
+
+        //
+        // Poll ACC_STATUS until the EC is not busy
+        //
+        int busy_attempts = 0;
+        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);
+
+        while (acc_status & EC_MEMMAP_ACC_STATUS_BUSY_BIT) {
+            if (busy_attempts++ >= MAX_BUSY_WAIT_ATTEMPTS) {
+                TraceError("%!FUNC! EC busy bit stuck after %d attempts", busy_attempts);
+                Status = STATUS_IO_DEVICE_ERROR;
+                goto Exit;
+            }
+
+            if (busy_attempts % BUSY_WAIT_SLEEP_INTERVAL == 0)
+                Sleep(BUSY_WAIT_SLEEP_MS);
+
+            CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);
+        }
+
+        TraceInformation("Status: (%02x), Present: %d, Busy: %d\n",
+            acc_status,
+            (acc_status & EC_MEMMAP_ACC_STATUS_PRESENCE_BIT) > 0,
+            (acc_status & EC_MEMMAP_ACC_STATUS_BUSY_BIT) > 0);
+
+        //
+        // Record the current sample ID before reading data
+        //
+        samp_id = acc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
+
+        //
+        // Read all sensor data (unsafe - EC could update mid-read)
+        //
+        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 0, &lid_angle_bytes[0]);
+        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 1, &lid_angle_bytes[1]);
+
+        CrosEcReadMemU8(Handle, SensorOffset + 0, &Sensor1[0]);
+        CrosEcReadMemU8(Handle, SensorOffset + 1, &Sensor1[1]);
+        CrosEcReadMemU8(Handle, SensorOffset + 2, &Sensor1[2]);
+        CrosEcReadMemU8(Handle, SensorOffset + 3, &Sensor1[3]);
+        CrosEcReadMemU8(Handle, SensorOffset + 4, &Sensor1[4]);
+        CrosEcReadMemU8(Handle, SensorOffset + 5, &Sensor1[5]);
+
+        //
+        // Re-read ACC_STATUS to verify data consistency
+        //
+        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &status);
+    }
+
+    //
+    // Data is now consistent - process it
+    //
+    lid_angle = lid_angle_bytes[0] + (lid_angle_bytes[1] << 8);
     TraceInformation("Lid Angle Status: %dDeg%s", lid_angle, lid_angle == 500 ?  "(Unreliable)" : "");
 
     // Lid accelerometer is relevant for screen rotation
     // Base accelerometer is not used in this driver
     // It's only used for lid angle in the EC firmware
-    UINT SensorOffset = 6 * m_LidSensorIndex + EC_MEMMAP_ACC_DATA + 2;
-    UINT16 Sensor1[6] = {0};
-    CrosEcReadMemU8(Handle, SensorOffset, (UINT8*)&Sensor1[0]);
-    CrosEcReadMemU8(Handle, SensorOffset + 1, (UINT8*)&Sensor1[1]);
-    CrosEcReadMemU8(Handle, SensorOffset + 2, (UINT8*)&Sensor1[2]);
-    CrosEcReadMemU8(Handle, SensorOffset + 3, (UINT8*)&Sensor1[3]);
-    CrosEcReadMemU8(Handle, SensorOffset + 4, (UINT8*)&Sensor1[4]);
-    CrosEcReadMemU8(Handle, SensorOffset + 5, (UINT8*)&Sensor1[5]);
     m_CachedData.Axis.X = (float) (Sensor1[0] + (Sensor1[1] << 8));
     m_CachedData.Axis.Y = (float) (Sensor1[2] + (Sensor1[3] << 8));
     m_CachedData.Axis.Z = (float) (Sensor1[4] + (Sensor1[5] << 8));
-    #define quarter (0xFFFF/4)
     m_CachedData.Axis.X = -((float) (INT16) m_CachedData.Axis.X) / quarter;
     m_CachedData.Axis.Y = -((float) (INT16) m_CachedData.Axis.Y) / quarter;
     m_CachedData.Axis.Z = -((float) (INT16) m_CachedData.Axis.Z) / quarter;
@@ -610,6 +678,7 @@ AccelerometerDevice::GetData(
         TraceInformation("COMBO %!FUNC! LAC Data did NOT meet the threshold");
     }
 
+Exit:
     SENSOR_FunctionExit(Status);
     return Status;
 }

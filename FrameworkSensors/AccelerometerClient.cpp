@@ -539,6 +539,17 @@ AccelerometerDevice::GetData(
     #define BUSY_WAIT_SLEEP_INTERVAL  5
     #define BUSY_WAIT_SLEEP_MS       25
 
+    // Helper: read a byte from EC memory map, goto Exit on failure.
+    // Note: CrosEcReadMemU8 already traces its own errors internally.
+    // We cannot use WPP trace macros inside #define because WPP generates
+    // per-line identifiers that break when the macro is expanded elsewhere.
+    #define EC_READ_U8(offset, dest) do { \
+        if (CrosEcReadMemU8(Handle, (offset), (dest)) == 0) { \
+            Status = STATUS_IO_DEVICE_ERROR; \
+            goto Exit; \
+        } \
+    } while (0)
+
     UINT8 lid_angle_bytes[2] = {0};
     UINT16 lid_angle = 0;
     UINT SensorOffset = 6 * m_LidSensorIndex + EC_MEMMAP_ACC_DATA + 2;
@@ -557,7 +568,7 @@ AccelerometerDevice::GetData(
         // Poll ACC_STATUS until the EC is not busy
         //
         int busy_attempts = 0;
-        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);
+        EC_READ_U8(EC_MEMMAP_ACC_STATUS, &acc_status);
 
         while (acc_status & EC_MEMMAP_ACC_STATUS_BUSY_BIT) {
             if (busy_attempts++ >= MAX_BUSY_WAIT_ATTEMPTS) {
@@ -569,7 +580,7 @@ AccelerometerDevice::GetData(
             if (busy_attempts % BUSY_WAIT_SLEEP_INTERVAL == 0)
                 Sleep(BUSY_WAIT_SLEEP_MS);
 
-            CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);
+            EC_READ_U8(EC_MEMMAP_ACC_STATUS, &acc_status);
         }
 
         TraceInformation("Status: (%02x), Present: %d, Busy: %d\n",
@@ -585,21 +596,23 @@ AccelerometerDevice::GetData(
         //
         // Read all sensor data (unsafe - EC could update mid-read)
         //
-        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 0, &lid_angle_bytes[0]);
-        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_DATA + 1, &lid_angle_bytes[1]);
+        EC_READ_U8(EC_MEMMAP_ACC_DATA + 0, &lid_angle_bytes[0]);
+        EC_READ_U8(EC_MEMMAP_ACC_DATA + 1, &lid_angle_bytes[1]);
 
-        CrosEcReadMemU8(Handle, SensorOffset + 0, &Sensor1[0]);
-        CrosEcReadMemU8(Handle, SensorOffset + 1, &Sensor1[1]);
-        CrosEcReadMemU8(Handle, SensorOffset + 2, &Sensor1[2]);
-        CrosEcReadMemU8(Handle, SensorOffset + 3, &Sensor1[3]);
-        CrosEcReadMemU8(Handle, SensorOffset + 4, &Sensor1[4]);
-        CrosEcReadMemU8(Handle, SensorOffset + 5, &Sensor1[5]);
+        EC_READ_U8(SensorOffset + 0, &Sensor1[0]);
+        EC_READ_U8(SensorOffset + 1, &Sensor1[1]);
+        EC_READ_U8(SensorOffset + 2, &Sensor1[2]);
+        EC_READ_U8(SensorOffset + 3, &Sensor1[3]);
+        EC_READ_U8(SensorOffset + 4, &Sensor1[4]);
+        EC_READ_U8(SensorOffset + 5, &Sensor1[5]);
 
         //
         // Re-read ACC_STATUS to verify data consistency
         //
-        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &status);
+        EC_READ_U8(EC_MEMMAP_ACC_STATUS, &status);
     }
+
+    #undef EC_READ_U8
 
     //
     // Data is now consistent - process it

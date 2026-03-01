@@ -21,49 +21,30 @@
 
 #include "Device.tmh"
 
-#define ENABLE_ALS_SENSOR 0
-#define ENABLE_ORIENTATION_SENSOR 0
-#define ENABLE_ACCEL_SENSOR 1
-
 //---------------------------------------
-// Declare and map devices below
+// Dynamic sensor detection
 //---------------------------------------
-enum Device
-{
-#if ENABLE_ALS_SENSOR
-    Device_Als,
-#endif
-#if ENABLE_ORIENTATION_SENSOR
-    Device_SimpleDeviceOrientation,
-#endif
-#if ENABLE_ACCEL_SENSOR
-    Device_Accelerometer,
-#endif
-    // Keep this last
-    Device_Count
-};
+#define MAX_SENSOR_COUNT 4
 
-static const ULONG SensorInstanceCount = Device_Count;
-static SENSOROBJECT SensorInstancesBuffer[SensorInstanceCount];    // Global buffer to avoid allocate and free
+typedef enum {
+    SENSOR_KIND_ACCELEROMETER,
+    SENSOR_KIND_ALS,
+} SensorKind;
+
+static ULONG SensorInstanceCount = 0;
+static SENSOROBJECT SensorInstancesBuffer[MAX_SENSOR_COUNT];
+
+static size_t SensorSizes[MAX_SENSOR_COUNT];
+static SensorKind SensorKinds[MAX_SENSOR_COUNT];
 
 inline size_t GetDeviceSizeAtIndex(
     _In_ ULONG Index)
 {
-    size_t result = 0;
-    switch (static_cast<Device>(Index))
+    if (Index < SensorInstanceCount)
     {
-#if ENABLE_ALS_SENSOR
-        case Device_Als:                    result = sizeof(AlsDevice); break;
-#endif
-#if ENABLE_ORIENTATION_SENSOR
-        case Device_SimpleDeviceOrientation:result = sizeof(SimpleDeviceOrientationDevice); break;
-#endif
-#if ENABLE_ACCEL_SENSOR
-        case Device_Accelerometer:    result = sizeof(AccelerometerDevice); break;
-#endif
-        default: break; // invalid
+        return SensorSizes[Index];
     }
-    return result;
+    return 0;
 }
 
 void AllocateDeviceAtIndex(
@@ -71,19 +52,16 @@ void AllocateDeviceAtIndex(
     _Inout_ PComboDevice* ppDevice
     )
 {
-    switch (static_cast<Device>(Index))
+    if (Index >= SensorInstanceCount)
     {
-#if ENABLE_ALS_SENSOR
-        case Device_Als:                    *ppDevice = new(*ppDevice) AlsDevice; break;
-#endif
-#if ENABLE_ORIENTATIONACCEL_SENSOR
-        case Device_SimpleDeviceOrientation:*ppDevice = new(*ppDevice) SimpleDeviceOrientationDevice; break;
-#endif
-#if ENABLE_ACCEL_SENSOR
-        case Device_Accelerometer:    *ppDevice = new(*ppDevice) AccelerometerDevice; break;
-#endif
+        return;
+    }
 
-        default: break; // invalid (let driver fail)
+    switch (SensorKinds[Index])
+    {
+        case SENSOR_KIND_ACCELEROMETER: *ppDevice = new(*ppDevice) AccelerometerDevice; break;
+        case SENSOR_KIND_ALS:           *ppDevice = new(*ppDevice) AlsDevice; break;
+        default: break;
     }
 }
 
@@ -224,6 +202,81 @@ OnPrepareHardware(
     NTSTATUS Status = STATUS_SUCCESS;
 
     SENSOR_FunctionEnter();
+
+    //
+    // Dynamic sensor detection
+    //
+    SensorInstanceCount = 0;
+
+    // Detect accelerometer + hinge angle via motion sensor presence
+    {
+        UINT8 acc_status = 0;
+        CrosEcReadMemU8(Handle, EC_MEMMAP_ACC_STATUS, &acc_status);
+        if (acc_status & EC_MEMMAP_ACC_STATUS_PRESENCE_BIT)
+        {
+            UINT8 base = 0, lid = 0;
+            if (NT_SUCCESS(CrosEcGetAccelIndeces(Handle, &base, &lid)))
+            {
+                TraceInformation("COMBO %!FUNC! Detected accelerometer (base=%d, lid=%d)", base, lid);
+                SensorSizes[SensorInstanceCount] = sizeof(AccelerometerDevice);
+                SensorKinds[SensorInstanceCount] = SENSOR_KIND_ACCELEROMETER;
+                SensorInstanceCount++;
+            }
+        }
+    }
+
+    // Detect ALS via motion sensor enumeration, then fallback to memmap
+    {
+        BOOLEAN alsFound = FALSE;
+        UINT8 sensorCount = CrosEcGetMotionSensorCount(Handle);
+        for (UINT8 idx = 0; idx < sensorCount && !alsFound; idx++)
+        {
+            EC_REQUEST_MOTION_SENSE_INFO infoReq{};
+            EC_RESPONSE_MOTION_SENSE_INFO infoRes{};
+
+            infoReq.Cmd = 1;
+            infoReq.SensorNum = idx;
+            if (0 != CrosEcSendCommand(
+                Handle,
+                EC_CMD_MOTION_SENSE_CMD,
+                1,
+                &infoReq,
+                sizeof(infoReq),
+                &infoRes,
+                sizeof(infoRes)))
+            {
+                if (infoRes.SensorType == MOTIONSENSE_TYPE_LIGHT ||
+                    infoRes.SensorType == MOTIONSENSE_TYPE_LIGHT_RGB)
+                {
+                    TraceInformation("COMBO %!FUNC! Detected ALS via motion sensor index %d", idx);
+                    alsFound = TRUE;
+                }
+            }
+        }
+
+        // Fallback: check EC_MEMMAP_ALS for non-zero value
+        if (!alsFound)
+        {
+            UINT8 alsVal[2] = {0};
+            CrosEcReadMemU8(Handle, EC_MEMMAP_ALS + 0, &alsVal[0]);
+            CrosEcReadMemU8(Handle, EC_MEMMAP_ALS + 1, &alsVal[1]);
+            UINT16 alsReading = alsVal[0] + (alsVal[1] << 8);
+            if (alsReading != 0)
+            {
+                TraceInformation("COMBO %!FUNC! Detected ALS via memmap (reading=%d)", alsReading);
+                alsFound = TRUE;
+            }
+        }
+
+        if (alsFound && SensorInstanceCount < MAX_SENSOR_COUNT)
+        {
+            SensorSizes[SensorInstanceCount] = sizeof(AlsDevice);
+            SensorKinds[SensorInstanceCount] = SENSOR_KIND_ALS;
+            SensorInstanceCount++;
+        }
+    }
+
+    TraceInformation("COMBO %!FUNC! Detected %d sensor(s) total", SensorInstanceCount);
 
     for (ULONG Count = 0; Count < SensorInstanceCount; Count++)
     {

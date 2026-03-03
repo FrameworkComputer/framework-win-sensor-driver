@@ -13,6 +13,7 @@
 //  Windows User-Mode Driver Framework (WUDF)
 
 #include "Clients.h"
+#include "EcCommunication.h"
 
 #include "Clients.tmh"
 
@@ -50,6 +51,8 @@ OnTimerExpire(
 
     // Get data and push to clx
     Lock(pDevice->m_Lock);
+    // Make sure we have a handle to the EC driver
+    ConnectToEc(&pDevice->m_CrosEcHandle);
     Status = pDevice->GetData(pDevice->m_CrosEcHandle);
     if (!NT_SUCCESS(Status) && Status != STATUS_DATA_NOT_ACCEPTED)
     {

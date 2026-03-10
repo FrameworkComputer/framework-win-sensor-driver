@@ -32,4 +32,21 @@ jobs:
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:${{matrix.language}}"
+          output: sarif-results
+
+      - name: Upload SARIF file
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif
+          path: sarif-results
+
+      - name: Generate DVL
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Windows Kits\10\Tools\dvl\dvl.exe" /manualCreate FrameworkSensors X64 /sarifPath sarif-results
+
+      - name: Upload DVL
+        uses: actions/upload-artifact@v4
+        with:
+          name: dvl
+          path: sarif-results/FrameworkSensors.DVL.XML

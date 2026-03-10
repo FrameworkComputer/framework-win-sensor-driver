@@ -120,4 +120,9 @@ int CrosEcReadMemU8(HANDLE Handle, unsigned int offset, UINT8* dest);
 
 #ifdef __cplusplus
 }
+
+// Motion sensor helpers (defined in AccelerometerClient.cpp)
+UINT8 CrosEcGetMotionSensorCount(HANDLE Handle);
+NTSTATUS CrosEcGetAccelIndeces(HANDLE Handle, UINT8 *BaseSensor, UINT8 *LidSensor);
+
 #endif

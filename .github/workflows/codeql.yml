@@ -1,0 +1,54 @@
+name: "CodeQL Analysis"
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+
+jobs:
+  codeql:
+    runs-on: windows-2022
+    permissions:
+      security-events: write
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: cpp
+          # Pin CodeQL CLI version for WHCP Windows 11 25H2 certification
+          # See: https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/static-tools-and-codeql
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.20.1/codeql-bundle-win64.tar.gz
+          config-file: .github/codeql/codeql-config.yml
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build solution
+        run: |
+          msbuild FrameworkSensors\FrameworkSensors.sln /property:Configuration=Release /property:Platform=x64
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          output: sarif-results
+
+      - name: Upload SARIF file
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif
+          path: sarif-results
+
+      - name: Generate DVL
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Windows Kits\10\Tools\dvl\dvl.exe" /manualCreate FrameworkSensors X64 /sarifPath sarif-results
+
+      - name: Upload DVL
+        uses: actions/upload-artifact@v4
+        with:
+          name: dvl
+          path: sarif-results/FrameworkSensors.DVL.XML

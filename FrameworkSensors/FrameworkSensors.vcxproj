@@ -124,7 +124,7 @@
       <AdditionalDependencies>%(AdditionalDependencies);mincore.lib;propsys.lib;$(WDK_UM_LIB_PATH)\sensors\1.1\sensorscxstub.lib;sensorsutils.lib</AdditionalDependencies>
     </Link>
     <Inf>
-      <TimeStamp>0.0.7.0</TimeStamp>
+      <TimeStamp>0.0.8.0</TimeStamp>
     </Inf>
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
@@ -150,7 +150,7 @@
       <AdditionalDependencies>%(AdditionalDependencies);mincore.lib;propsys.lib;$(WDK_UM_LIB_PATH)\sensors\1.1\sensorscxstub.lib;sensorsutils.lib</AdditionalDependencies>
     </Link>
     <Inf>
-      <TimeStamp>0.0.7.0</TimeStamp>
+      <TimeStamp>0.0.8.0</TimeStamp>
     </Inf>
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
@@ -176,7 +176,7 @@
       <AdditionalDependencies>%(AdditionalDependencies);mincore.lib;propsys.lib;$(WDK_UM_LIB_PATH)\sensors\1.1\sensorscxstub.lib;sensorsutils.lib</AdditionalDependencies>
     </Link>
     <Inf>
-      <TimeStamp>0.0.7.0</TimeStamp>
+      <TimeStamp>0.0.8.0</TimeStamp>
     </Inf>
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
@@ -202,7 +202,7 @@
       <AdditionalDependencies>%(AdditionalDependencies);mincore.lib;propsys.lib;$(WDK_UM_LIB_PATH)\sensors\1.1\sensorscxstub.lib;sensorsutils.lib</AdditionalDependencies>
     </Link>
     <Inf>
-      <TimeStamp>0.0.7.0</TimeStamp>
+      <TimeStamp>0.0.8.0</TimeStamp>
     </Inf>
     <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>

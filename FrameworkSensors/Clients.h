@@ -261,3 +261,27 @@ public:
     NTSTATUS                    UpdateCachedThreshold();
 
 } SimpleDeviceOrientationDevice, *PSimpleDeviceOrientationDevice;
+
+
+
+//
+// Hinge Angle ----------------------------------------------------------------
+//
+typedef class _HingeAngleDevice : public _ComboDevice
+{
+private:
+    typedef struct _HingeAngleSample
+    {
+        FLOAT   Angle;
+    } HingeAngleSample;
+
+    HingeAngleSample    m_CachedThresholds;
+    HingeAngleSample    m_CachedData;
+    HingeAngleSample    m_LastSample;
+
+public:
+    NTSTATUS            Initialize(_In_ WDFDEVICE Device, _In_ SENSOROBJECT SensorObj);
+    NTSTATUS            GetData(_In_ HANDLE Device);
+    NTSTATUS            UpdateCachedThreshold();
+
+} HingeAngleDevice, *PHingeAngleDevice;

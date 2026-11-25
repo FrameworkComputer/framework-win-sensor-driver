@@ -1,0 +1,45 @@
+[package]
+name = "FrameworkSensors"
+version = "0.1.0"
+description = "Framework Computer sensor driver (UMDF 2, Sensor Class Extension)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[package.metadata.wdk]
+# Using workspace wdk config
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+paste.workspace = true
+sensors-core = { path = "../sensors-core" }
+wdk.workspace = true
+wdk-panic.workspace = true
+wdk-sys.workspace = true
+
+[dependencies.windows-sys]
+workspace = true
+features = [
+    "Win32_Devices_Sensors",
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_IO",
+    "Win32_System_SystemInformation",
+    "Win32_System_Variant",
+]
+
+[build-dependencies]
+anyhow.workspace = true
+wdk-build.workspace = true
+
+[features]
+default = ["accelerometer"]
+# Sensors to expose (the C++ driver had ENABLE_*_SENSOR defines).
+accelerometer = []
+als = []
+nightly = ["wdk/nightly", "wdk-sys/nightly"]

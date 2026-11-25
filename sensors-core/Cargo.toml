@@ -1,0 +1,9 @@
+[package]
+name = "sensors-core"
+version = "0.1.0"
+description = "Framework sensor driver logic that does not depend on the WDK: EC IOCTL ABI, motion sense queries, accelerometer sampling"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]

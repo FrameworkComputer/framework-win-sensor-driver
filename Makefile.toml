@@ -1,0 +1,38 @@
+extend = [{ path = "target/rust-driver-makefile.toml" }]
+
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+# DriverVer stamped into the INF. Must stay above the C++ driver's 0.0.8.0 so
+# PnP prefers it.
+DRIVER_VERSION = "0.1.0.0"
+
+# Same as wdk-build's task, but with a fixed version: with `-v *` stampinf
+# stamps the time of day.
+[tasks.stampinf]
+args = [
+  "-f",
+  "${WDK_BUILD_OUTPUT_DIRECTORY}/${CARGO_MAKE_CRATE_FS_NAME}.inf",
+  "-d",
+  "*",
+  "-a",
+  "${WDK_BUILD_STAMPINF_ARCH}",
+  "-c",
+  "${CARGO_MAKE_CRATE_FS_NAME}.cat",
+  "-v",
+  "${DRIVER_VERSION}",
+  "@@split(WDK_BUILD_STAMPINF_WDF_FLAGS, ,remove-empty)",
+]
+# Overriding the task drops wdk-build's env, so it is repeated here.
+env = { "WDK_BUILD_STAMPINF_ARCH" = { default_value = "UNKNOWN", mapping = { "aarch64-pc-windows-msvc" = "arm64", "x86_64-pc-windows-msvc" = "amd64" }, source = "${CARGO_MAKE_CRATE_TARGET_TRIPLE}" }, "WDK_BUILD_STAMPINF_WDF_FLAGS" = { default_value = "", mapping = { "KMDF" = "-k ${WDK_BUILD_METADATA-DRIVER_MODEL-KMDF_VERSION_MAJOR}.${WDK_BUILD_METADATA-DRIVER_MODEL-TARGET_KMDF_VERSION_MINOR}", "UMDF" = "-u ${WDK_BUILD_METADATA-DRIVER_MODEL-UMDF_VERSION_MAJOR}.${WDK_BUILD_METADATA-DRIVER_MODEL-TARGET_UMDF_VERSION_MINOR}.0" }, source = "${WDK_BUILD_METADATA-DRIVER_MODEL-DRIVER_TYPE}" } }
+
+[config]
+load_script = '''
+#!@rust
+//! ```cargo
+//! [dependencies]
+//! wdk-build = "0.6.0"
+//! ```
+#![allow(unused_doc_comments)]
+
+wdk_build::cargo_make::load_rust_driver_makefile()?
+'''

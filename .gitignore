@@ -199,3 +199,6 @@ FakesAssemblies/
 *.opt
 *.db
 *.opendb
+
+# Rust
+/target
